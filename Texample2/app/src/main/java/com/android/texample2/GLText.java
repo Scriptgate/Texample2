@@ -23,7 +23,6 @@ import static android.opengl.GLES20.*;
 
 public class GLText {
 
-    //--Constants--//
     private final static int CHAR_START = 32;           // First Character (ASCII Code)
     private final static int CHAR_END = 126;            // Last Character (ASCII Code)
     private final static int CHAR_CNT = (((CHAR_END - CHAR_START) + 1) + 1);  // Character Count (Including Character to use for Unknown)
@@ -67,9 +66,12 @@ public class GLText {
     private int mColorHandle;                           // Shader color handle
     private int mTextureUniformHandle;                 // Shader texture handle
 
-
-    //--Constructor--//
-    // D: save program + asset manager, create arrays, and initialize the members
+    /**
+     * save program + asset manager, create arrays, and initialize the members
+     *
+     * @param program
+     * @param assets
+     */
     public GLText(Program program, AssetManager assets) {
         if (program == null) {
             program = new BatchTextProgram();
@@ -118,12 +120,22 @@ public class GLText {
 
     //--Load Font--//
     // description
-    //    this will load the specified font file, create a texture for the defined
-    //    character range, and setup all required values used to render with it.
+    //
     // arguments:
-    //    file - Filename of the font (.ttf, .otf) to use. In 'Assets' folder.
-    //    size - Requested pixel size of font (height)
-    //    padX, padY - Extra padding per character (X+Y Axis); to prevent overlapping characters.
+    //    file -
+    //    size -
+    //    padX, padY -
+
+    /**
+     * Load font
+     * this will load the specified font file, create a texture for the defined character range, and setup all required values used to render with it.
+     *
+     * @param file Filename of the font (.ttf, .otf) to use. In 'Assets' folder.
+     * @param size Requested pixel size of font (height)
+     * @param padX Extra padding per character on X-Axis to prevent overlapping characters.
+     * @param padY Extra padding per character on Y-Axis to prevent overlapping characters.
+     * @return
+     */
     public boolean load(String file, int size, int padX, int padY) {
 
         // setup requested values
@@ -273,16 +285,20 @@ public class GLText {
     }
 
     public void end() {
-        batch.endBatch();                               // End Batch
+        batch.endBatch();
         glDisableVertexAttribArray(mColorHandle);
     }
 
-    //--Draw Text--//
-    // D: draw text at the specified x,y position
-    // A: text - the string to draw
-    //    x, y, z - the x, y, z position to draw text at (bottom left of text; including descent)
-    //    angleDeg - angle to rotate the text
-    // R: [none]
+    /**
+     * draw text at the specified x,y position
+     * @param text the string to draw
+     * @param x the x-position to draw text at (bottom left of text; including descent)
+     * @param y the y-position to draw text at (bottom left of text; including descent)
+     * @param z the z-position to draw text at (bottom left of text; including descent)
+     * @param angleDegX the x-position of the angle to rotate the text
+     * @param angleDegY the y-position of the angle to rotate the text
+     * @param angleDegZ the z-position of the angle to rotate the text
+     */
     public void draw(String text, float x, float y, float z, float angleDegX, float angleDegY, float angleDegZ) {
         float chrHeight = cellHeight * scaleY;          // Calculate Scaled Character Height
         float chrWidth = cellWidth * scaleX;            // Calculate Scaled Character Width
@@ -462,8 +478,7 @@ public class GLText {
         batch.beginBatch(vpMatrix);                  // Begin Batch (Bind Texture)
         float[] idMatrix = new float[16];
         Matrix.setIdentityM(idMatrix, 0);
-        batch.drawSprite(width - (textureSize / 2), height - (textureSize / 2),
-                textureSize, textureSize, textureRgn, idMatrix);  // Draw
-        batch.endBatch();                               // End Batch
+        batch.drawSprite(width - (textureSize / 2), height - (textureSize / 2), textureSize, textureSize, textureRgn, idMatrix);
+        batch.endBatch();
     }
 }

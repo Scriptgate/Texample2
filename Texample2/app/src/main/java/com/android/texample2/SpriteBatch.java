@@ -8,27 +8,27 @@ import static android.opengl.GLES20.*;
 
 public class SpriteBatch {
 
-    //--Constants--//
-    final static int VERTEX_SIZE = 5;                  // Vertex Size (in Components) ie. (X,Y,U,V,M), M is MVP matrix index
-    final static int VERTICES_PER_SPRITE = 4;          // Vertices Per Sprite
-    final static int INDICES_PER_SPRITE = 6;           // Indices Per Sprite
+    private final static int VERTEX_SIZE = 5;                  // Vertex Size (in Components) ie. (X,Y,U,V,M), M is MVP matrix index
+    private final static int VERTICES_PER_SPRITE = 4;          // Vertices Per Sprite
+    private final static int INDICES_PER_SPRITE = 6;           // Indices Per Sprite
     private static final String TAG = "SpriteBatch";
 
-    //--Members--//
-    Vertices vertices;                                 // Vertices Instance Used for Rendering
-    float[] vertexBuffer;                              // Vertex Buffer
-    int bufferIndex;                                   // Vertex Buffer Start Index
-    int maxSprites;                                    // Maximum Sprites Allowed in Buffer
-    int numSprites;                                    // Number of Sprites Currently in Buffer
-    private float[] mVPMatrix;                            // View and projection matrix specified at begin
+    private Vertices vertices;                                 // Vertices Instance Used for Rendering
+    private float[] vertexBuffer;                              // Vertex Buffer
+    private int bufferIndex;                                   // Vertex Buffer Start Index
+    private int maxSprites;                                    // Maximum Sprites Allowed in Buffer
+    private int numSprites;                                    // Number of Sprites Currently in Buffer
+    private float[] viewProjectionMatrix;                            // View and projection matrix specified at begin
     private float[] uMVPMatrices = new float[GLText.CHAR_BATCH_SIZE * 16]; // MVP matrix array to pass to shader
     private int mMVPMatricesHandle;                            // shader handle of the MVP matrix array
     private float[] mMVPMatrix = new float[16];                // used to calculate MVP matrix of each sprite
 
-    //--Constructor--//
-    // D: prepare the sprite batcher for specified maximum number of sprites
-    // A: maxSprites - the maximum allowed sprites per batch
-    //    program - program to use when drawing
+
+    /**
+     * Prepare the sprite batcher for specified maximum number of sprites
+     * @param maxSprites the maximum allowed sprites per batch
+     * @param program program to use when drawing
+     */
     public SpriteBatch(int maxSprites, Program program) {
         this.vertexBuffer = new float[maxSprites * VERTICES_PER_SPRITE * VERTEX_SIZE];  // Create Vertex Buffer
         this.vertices = new Vertices(maxSprites * VERTICES_PER_SPRITE, maxSprites * INDICES_PER_SPRITE);  // Create Rendering Vertices
@@ -54,13 +54,13 @@ public class SpriteBatch {
     public void beginBatch(float[] vpMatrix) {
         numSprites = 0;                                 // Empty Sprite Counter
         bufferIndex = 0;                                // Reset Buffer Index (Empty)
-        mVPMatrix = vpMatrix;
+        viewProjectionMatrix = vpMatrix;
     }
 
-    //--End Batch--//
-    // D: signal the end of a batch. render the batched sprites
-    // A: [none]
-    // R: [none]
+
+    /**
+     * Signal the end of a batch. Render the batched sprites
+     */
     public void endBatch() {
         if (numSprites > 0) {                        // IF Any Sprites to Render
             // bind MVP matrices array to shader
@@ -74,16 +74,20 @@ public class SpriteBatch {
         }
     }
 
-    //--Draw Sprite to Batch--//
-    // D: batch specified sprite to batch. adds vertices for sprite to vertex buffer
-    //    NOTE: MUST be called after beginBatch(), and before endBatch()!
-    //    NOTE: if the batch overflows, this will render the current batch, restart it,
-    //          and then batch this sprite.
-    // A: x, y - the x,y position of the sprite (center)
-    //    width, height - the width and height of the sprite
-    //    region - the texture region to use for sprite
-    //    modelMatrix - the model matrix to assign to the sprite
-    // R: [none]
+    /**
+     * Draw Sprite to Batch
+     * batch specified sprite to batch. adds vertices for sprite to vertex buffer
+     * NOTE: MUST be called after beginBatch(), and before endBatch()!
+     * NOTE: if the batch overflows, this will render the current batch, restart it,
+     * and then batch this sprite.
+     *
+     * @param x           the x-position of the sprite (center)
+     * @param y           the y-position of the sprite (center)
+     * @param width       the width of the sprite
+     * @param height      the height of the sprite
+     * @param region      the texture region to use for sprite
+     * @param modelMatrix the model matrix to assign to the sprite
+     */
     public void drawSprite(float x, float y, float width, float height, TextureRegion region, float[] modelMatrix) {
         if (numSprites == maxSprites) {              // IF Sprite Buffer is Full
             endBatch();                                  // End Batch
@@ -125,7 +129,7 @@ public class SpriteBatch {
 
         // add the sprite mvp matrix to uMVPMatrices array
 
-        Matrix.multiplyMM(mMVPMatrix, 0, mVPMatrix, 0, modelMatrix, 0);
+        Matrix.multiplyMM(mMVPMatrix, 0, viewProjectionMatrix, 0, modelMatrix, 0);
 
         //TODO: make sure numSprites < 24
         for (int i = 0; i < 16; ++i) {

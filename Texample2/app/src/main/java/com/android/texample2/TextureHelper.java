@@ -8,6 +8,7 @@ import android.opengl.GLUtils;
 import static android.opengl.GLES20.*;
 
 public class TextureHelper {
+
     public static int loadTexture(final Context context, final int resourceId) {
         final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inScaled = false; // No pre-scaling

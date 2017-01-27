@@ -46,10 +46,10 @@ public class Vertices {
         this.vertexStride = this.positionCnt + TEXCOORD_CNT + MVP_MATRIX_INDEX_CNT;  // Calculate Vertex Stride
         this.vertexSize = this.vertexStride * 4;        // Calculate Vertex Byte Size
 
-        this.vertices = allocateDirect(maxVertices * vertexSize).order(nativeOrder()).asIntBuffer();           // Save Vertex Buffer
+        this.vertices = allocateDirect(maxVertices * vertexSize).order(nativeOrder()).asIntBuffer();
 
         if (maxIndices > 0) {                        // IF Indices Required
-            this.indices = allocateDirect(maxIndices * INDEX_SIZE).order(nativeOrder()).asShortBuffer();       // Save Index Buffer
+            this.indices = allocateDirect(maxIndices * INDEX_SIZE).order(nativeOrder()).asShortBuffer();
         } else {                                          // ELSE Indices Not Required
             indices = null;                              // No Index Buffer
         }

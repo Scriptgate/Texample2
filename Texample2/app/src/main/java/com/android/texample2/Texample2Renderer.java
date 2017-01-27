@@ -12,8 +12,8 @@ import static android.opengl.GLES20.*;
 public class Texample2Renderer implements GLSurfaceView.Renderer {
 
     private static final String TAG = "TexampleRenderer";
-    private GLText glText;                             // A GLText Instance
-    private Context context;                           // Context (from Activity)
+    private GLText glText;
+    private Context activityContext;
 
     private int width = 100;                           // Updated to the Current Width + Height in onSurfaceChanged()
     private int height = 100;
@@ -23,7 +23,7 @@ public class Texample2Renderer implements GLSurfaceView.Renderer {
 
     public Texample2Renderer(Context context) {
         super();
-        this.context = context;                         // Save Specified Context
+        this.activityContext = context;
     }
 
     public void onSurfaceCreated(GL10 unused, EGLConfig config) {
@@ -31,7 +31,7 @@ public class Texample2Renderer implements GLSurfaceView.Renderer {
         glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 
         // Create the GLText
-        glText = new GLText(context.getAssets());
+        glText = new GLText(activityContext.getAssets());
 
         // Load the font from file (set size + padding), creates the texture
         // NOTE: after a successful call to this the font is ready for rendering!
@@ -56,18 +56,18 @@ public class Texample2Renderer implements GLSurfaceView.Renderer {
         // TEST: render some strings with the font
         glText.begin(1.0f, 1.0f, 1.0f, 1.0f, mVPMatrix);         // Begin Text Rendering (Set Color WHITE)
         glText.drawC("Test String 3D!", 0f, 0f, 0f, 0, -30, 0);
-//		glText.drawC( "Test String :)", 0, 0, 0 );          // Draw Test String
-        glText.draw("Diagonal 1", 40, 40, 40);                // Draw Test String
-        glText.draw("Column 1", 100, 100, 90);              // Draw Test String
-        glText.end();                                   // End Text Rendering
+//		glText.drawC( "Test String :)", 0, 0, 0 );
+        glText.draw("Diagonal 1", 40, 40, 40);
+        glText.draw("Column 1", 100, 100, 90);
+        glText.end();
 
         glText.begin(0.0f, 0.0f, 1.0f, 1.0f, mVPMatrix);         // Begin Text Rendering (Set Color BLUE)
-        glText.draw("More Lines...", 50, 200);        // Draw Test String
-        glText.draw("The End.", 50, 200 + glText.getCharHeight(), 180);  // Draw Test String
-        glText.end();                                   // End Text Rendering
+        glText.draw("More Lines...", 50, 200);
+        glText.draw("The End.", 50, 200 + glText.getCharHeight(), 180);
+        glText.end();
     }
 
-    public void onSurfaceChanged(GL10 unused, int width, int height) { //		gl.glViewport( 0, 0, width, height );
+    public void onSurfaceChanged(GL10 unused, int width, int height) {
         glViewport(0, 0, width, height);
         float ratio = (float) width / height;
 
@@ -78,7 +78,6 @@ public class Texample2Renderer implements GLSurfaceView.Renderer {
             Matrix.frustumM(mProjMatrix, 0, -1, 1, -1 / ratio, 1 / ratio, 1, 10);
         }
 
-        // Save width and height
         this.width = width;
         this.height = height;
 
