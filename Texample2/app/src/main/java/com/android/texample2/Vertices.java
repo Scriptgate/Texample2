@@ -36,12 +36,12 @@ public class Vertices {
     private int mPositionHandle;
     private int mMVPIndexHandle;
 
-    //--Constructor--//
-    // D: create the vertices/indices as specified (for 2d/3d)
-    // A: maxVertices - maximum vertices allowed in buffer
-    //    maxIndices - maximum indices allowed in buffer
+    /**
+     * create the vertices/indices as specified (for 2d/3d)
+     * @param maxVertices maximum vertices allowed in buffer
+     * @param maxIndices maximum indices allowed in buffer
+     */
     public Vertices(int maxVertices, int maxIndices) {
-        //      this.gl = gl;                                   // Save GL Instance
         this.positionCnt = POSITION_CNT_2D;  // Set Position Component Count
         this.vertexStride = this.positionCnt + TEXCOORD_CNT + MVP_MATRIX_INDEX_CNT;  // Calculate Vertex Stride
         this.vertexSize = this.vertexStride * 4;        // Calculate Vertex Byte Size
@@ -50,8 +50,8 @@ public class Vertices {
 
         if (maxIndices > 0) {                        // IF Indices Required
             this.indices = allocateDirect(maxIndices * INDEX_SIZE).order(nativeOrder()).asShortBuffer();
-        } else {                                          // ELSE Indices Not Required
-            indices = null;                              // No Index Buffer
+        } else {
+            this.indices = null;                              // No Index Buffer
         }
 
         numVertices = 0;                                // Zero Vertices in Buffer
@@ -65,14 +65,13 @@ public class Vertices {
         mPositionHandle = POSITION.getHandle();
     }
 
-    //--Set Vertices--//
-    // D: set the specified vertices in the vertex buffer
-    //    NOTE: optimized to use integer buffer!
-    // A: vertices - array of vertices (floats) to set
-    //    offset - offset to first vertex in array
-    //    length - number of floats in the vertex array (total)
-    //             for easy setting use: vtx_cnt * (this.vertexSize / 4)
-    // R: [none]
+    /**
+     * set the specified vertices in the vertex buffer <br/>
+     * NOTE: optimized to use integer buffer!
+     * @param vertices array of vertices (floats) to set
+     * @param offset offset to first vertex in array
+     * @param length number of floats in the vertex array (total) <br/>for easy setting use: vtx_cnt * (this.vertexSize / 4)
+     */
     public void setVertices(float[] vertices, int offset, int length) {
         this.vertices.clear();                          // Remove Existing Vertices
         int last = offset + length;                     // Calculate Last Element
@@ -84,23 +83,22 @@ public class Vertices {
         this.numVertices = length / this.vertexStride;  // Save Number of Vertices
     }
 
-    //--Set Indices--//
-    // D: set the specified indices in the index buffer
-    // A: indices - array of indices (shorts) to set
-    //    offset - offset to first index in array
-    //    length - number of indices in array (from offset)
-    // R: [none]
+    /**
+     * set the specified indices in the index buffer
+     * @param indices array of indices (shorts) to set
+     * @param offset offset to first index in array
+     * @param length number of indices in array (from offset)
+     */
     public void setIndices(short[] indices, int offset, int length) {
         this.indices.clear();
         this.indices.put(indices, offset, length).flip();
         this.numIndices = length;
     }
 
-    //--Bind--//
-    // D: perform all required binding/state changes before rendering batches.
-    //    USAGE: call once before calling draw() multiple times for this buffer.
-    // A: [none]
-    // R: [none]
+    /**
+     * perform all required binding/state changes before rendering batches.<br/>
+     * USAGE: call once before calling draw() multiple times for this buffer.
+     */
     public void bind() {
         // bind vertex position pointer
         vertices.position(0);                         // Set Vertex Buffer to Position
@@ -118,13 +116,14 @@ public class Vertices {
         glEnableVertexAttribArray(mMVPIndexHandle);
     }
 
-    //--Draw--//
-    // D: draw the currently bound vertices in the vertex/index buffers
-    //    USAGE: can only be called after calling bind() for this buffer.
-    // A: primitiveType - the type of primitive to draw
-    //    offset - the offset in the vertex/index buffer to start at
-    //    numVertices - the number of vertices (indices) to draw
-    // R: [none]
+    /**
+     * draw the currently bound vertices in the vertex/index buffers<br/>
+     * USAGE: can only be called after calling bind() for this buffer.
+     *
+     * @param primitiveType the type of primitive to draw
+     * @param offset        the offset in the vertex/index buffer to start at
+     * @param numVertices   the number of vertices (indices) to draw
+     */
     public void draw(int primitiveType, int offset, int numVertices) {
         if (indices != null) {                       // IF Indices Exist
             indices.position(offset);                  // Set Index Buffer to Specified Offset
@@ -136,11 +135,10 @@ public class Vertices {
         }
     }
 
-    //--Unbind--//
-    // D: clear binding states when done rendering batches.
-    //    USAGE: call once before calling draw() multiple times for this buffer.
-    // A: [none]
-    // R: [none]
+    /**
+     * clear binding states when done rendering batches.<br/>
+     * USAGE: call once before calling draw() multiple times for this buffer.
+     */
     public void unbind() {
         glDisableVertexAttribArray(mTextureCoordinateHandle);
     }

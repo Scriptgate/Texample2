@@ -4,7 +4,10 @@ import com.android.texample2.programs.Program;
 
 import android.opengl.Matrix;
 
+import java.util.List;
+
 import static android.opengl.GLES20.*;
+import static java.util.Arrays.asList;
 
 public class SpriteBatch {
 
@@ -26,8 +29,9 @@ public class SpriteBatch {
 
     /**
      * Prepare the sprite batcher for specified maximum number of sprites
+     *
      * @param maxSprites the maximum allowed sprites per batch
-     * @param program program to use when drawing
+     * @param program    program to use when drawing
      */
     public SpriteBatch(int maxSprites, Program program) {
         this.vertexBuffer = new float[maxSprites * VERTICES_PER_SPRITE * VERTEX_SIZE];  // Create Vertex Buffer
@@ -67,10 +71,10 @@ public class SpriteBatch {
             glUniformMatrix4fv(mMVPMatricesHandle, numSprites, false, uMVPMatrices, 0);
             glEnableVertexAttribArray(mMVPMatricesHandle);
 
-            vertices.setVertices(vertexBuffer, 0, bufferIndex);  // Set Vertices from Buffer
-            vertices.bind();                             // Bind Vertices
+            vertices.setVertices(vertexBuffer, 0, bufferIndex);
+            vertices.bind();
             vertices.draw(GL_TRIANGLES, 0, numSprites * INDICES_PER_SPRITE);  // Render Batched Sprites
-            vertices.unbind();                           // Unbind Vertices
+            vertices.unbind();
         }
     }
 
@@ -96,39 +100,26 @@ public class SpriteBatch {
             bufferIndex = 0;                             // Reset Buffer Index (Empty)
         }
 
-        float halfWidth = width / 2.0f;                 // Calculate Half Width
-        float halfHeight = height / 2.0f;               // Calculate Half Height
-        float x1 = x - halfWidth;                       // Calculate Left X
-        float y1 = y - halfHeight;                      // Calculate Bottom Y
-        float x2 = x + halfWidth;                       // Calculate Right X
-        float y2 = y + halfHeight;                      // Calculate Top Y
+        float halfWidth = width / 2.0f;
+        float halfHeight = height / 2.0f;
+        float leftX = x - halfWidth;
+        float bottomY = y - halfHeight;
+        float rightX = x + halfWidth;
+        float topY = y + halfHeight;
 
-        vertexBuffer[bufferIndex++] = x1;               // Add X for Vertex 0
-        vertexBuffer[bufferIndex++] = y1;               // Add Y for Vertex 0
-        vertexBuffer[bufferIndex++] = region.u1;        // Add U for Vertex 0
-        vertexBuffer[bufferIndex++] = region.v2;        // Add V for Vertex 0
-        vertexBuffer[bufferIndex++] = numSprites;
+        List<Vertex> vertices = asList(
+                new Vertex(leftX, bottomY, region.u1, region.v2, numSprites),
+                new Vertex(rightX, bottomY, region.u2, region.v2, numSprites),
+                new Vertex(rightX, topY, region.u2, region.v1, numSprites),
+                new Vertex(leftX, topY, region.u1, region.v1, numSprites)
+        );
 
-        vertexBuffer[bufferIndex++] = x2;               // Add X for Vertex 1
-        vertexBuffer[bufferIndex++] = y1;               // Add Y for Vertex 1
-        vertexBuffer[bufferIndex++] = region.u2;        // Add U for Vertex 1
-        vertexBuffer[bufferIndex++] = region.v2;        // Add V for Vertex 1
-        vertexBuffer[bufferIndex++] = numSprites;
-
-        vertexBuffer[bufferIndex++] = x2;               // Add X for Vertex 2
-        vertexBuffer[bufferIndex++] = y2;               // Add Y for Vertex 2
-        vertexBuffer[bufferIndex++] = region.u2;        // Add U for Vertex 2
-        vertexBuffer[bufferIndex++] = region.v1;        // Add V for Vertex 2
-        vertexBuffer[bufferIndex++] = numSprites;
-
-        vertexBuffer[bufferIndex++] = x1;               // Add X for Vertex 3
-        vertexBuffer[bufferIndex++] = y2;               // Add Y for Vertex 3
-        vertexBuffer[bufferIndex++] = region.u1;        // Add U for Vertex 3
-        vertexBuffer[bufferIndex++] = region.v1;        // Add V for Vertex 3
-        vertexBuffer[bufferIndex++] = numSprites;
+        for (int i = 0; i < vertices.size(); i++) {
+            vertices.get(i).addTo(vertexBuffer, bufferIndex);
+            bufferIndex += VERTEX_SIZE;
+        }
 
         // add the sprite mvp matrix to uMVPMatrices array
-
         Matrix.multiplyMM(mMVPMatrix, 0, viewProjectionMatrix, 0, modelMatrix, 0);
 
         //TODO: make sure numSprites < 24
@@ -136,6 +127,30 @@ public class SpriteBatch {
             uMVPMatrices[numSprites * 16 + i] = mMVPMatrix[i];
         }
 
-        numSprites++;                                   // Increment Sprite Count
+        numSprites++;
+    }
+
+    private class Vertex {
+        float x;
+        float y;
+        float u;
+        float v;
+        int numberOfSprites;
+
+        public Vertex(float x, float y, float u, float v, int numberOfSprites) {
+            this.x = x;
+            this.y = y;
+            this.u = u;
+            this.v = v;
+            this.numberOfSprites = numberOfSprites;
+        }
+
+        public void addTo(float[] vertexBuffer, int offset) {
+            vertexBuffer[offset] = x;
+            vertexBuffer[offset + 1] = y;
+            vertexBuffer[offset + 2] = u;
+            vertexBuffer[offset + 3] = v;
+            vertexBuffer[offset + 4] = numSprites;
+        }
     }
 }

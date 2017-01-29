@@ -28,20 +28,27 @@ public class Texample2 extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
-        // The following call pauses the rendering thread.
+        deallocateMemory();
+        glView.onPause();
+    }
+
+    private void deallocateMemory() {
         // If your OpenGL application is memory intensive,
         // you should consider de-allocating objects that
         // consume significant memory here.
-        glView.onPause();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // The following call resumes a paused rendering thread.
+        allocateMemory();
+
+        glView.onResume();
+    }
+
+    private void allocateMemory() {
         // If you de-allocated graphic objects for onPause()
         // this is a good place to re-allocate them.
-        glView.onResume();
     }
 }
 
@@ -50,10 +57,8 @@ class TexampleSurfaceView extends GLSurfaceView {
     public TexampleSurfaceView(Context context) {
         super(context);
 
-        // Set to use OpenGL ES 2.0
         setEGLContextClientVersion(2);
 
-        // Set the Renderer for drawing on the GLSurfaceView
         setRenderer(new Texample2Renderer(context));
     }
 }

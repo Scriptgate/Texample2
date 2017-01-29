@@ -133,12 +133,7 @@ public class GLText {
         fontPadY = padY;                                // Set Requested Y Axis Padding
 
         // load the font and setup paint instance for drawing
-        Typeface tf = Typeface.createFromAsset(assets, file);  // Create the Typeface from Font File
-        Paint paint = new Paint();                      // Create Android Paint Instance
-        paint.setAntiAlias(true);                     // Enable Anti Alias
-        paint.setTextSize(size);                      // Set Text Size
-        paint.setColor(0xffffffff);                   // Set ARGB (White, Opaque)
-        paint.setTypeface(tf);                        // Set Typeface
+        Paint paint = setUpPaint(file, size);
 
         // get font metrics
         Paint.FontMetrics fm = paint.getFontMetrics();  // Get Font Metrics
@@ -146,26 +141,8 @@ public class GLText {
         fontAscent = (float) Math.ceil(Math.abs(fm.ascent));  // Save Font Ascent
         fontDescent = (float) Math.ceil(Math.abs(fm.descent));  // Save Font Descent
 
-        // determine the width of each character (including unknown character)
-        // also determine the maximum character width
-        char[] s = new char[2];                         // Create Character Array
-        charWidthMax = charHeight = 0;                  // Reset Character Width/Height Maximums
-        float[] w = new float[2];                       // Working Width Value
-        int cnt = 0;                                    // Array Counter
-        for (char c = CHAR_START; c <= CHAR_END; c++) {  // FOR Each Character
-            s[0] = c;                                    // Set Character
-            paint.getTextWidths(s, 0, 1, w);           // Get Character Bounds
-            charWidths[cnt] = w[0];                      // Get Width
-            if (charWidths[cnt] > charWidthMax)        // IF Width Larger Than Max Width
-                charWidthMax = charWidths[cnt];           // Save New Max Width
-            cnt++;                                       // Advance Array Counter
-        }
-        s[0] = CHAR_NONE;                               // Set Unknown Character
-        paint.getTextWidths(s, 0, 1, w);              // Get Character Bounds
-        charWidths[cnt] = w[0];                         // Get Width
-        if (charWidths[cnt] > charWidthMax) {           // IF Width Larger Than Max Width
-            charWidthMax = charWidths[cnt];              // Save New Max Width
-        }
+        //determine the width of each character (including unknown character) also determine the maximum character width
+        determineCharacterWidths(paint);
 
         // set character height to font height
         charHeight = fontHeight;                        // Set Character Height
@@ -178,50 +155,38 @@ public class GLText {
             return false;                                // Return Error
         }
 
-        // set texture size based on max font size (width or height)
-        // NOTE: these values are fixed, based on the defined characters. when
-        // changing start/end characters (CHAR_START/CHAR_END) this will need adjustment too!
-        if (maxSize <= 24) {                           // IF Max Size is 18 or Less
-            textureSize = 256;                         // Set 256 Texture Size
-        } else if (maxSize <= 40) {                    // ELSE IF Max Size is 40 or Less
-            textureSize = 512;                         // Set 512 Texture Size
-        } else if (maxSize <= 80) {                    // ELSE IF Max Size is 80 or Less
-            textureSize = 1024;                        // Set 1024 Texture Size
-        } else {                                       // ELSE IF Max Size is Larger Than 80 (and Less than FONT_SIZE_MAX)
-            textureSize = 2048;                        // Set 2048 Texture Size
-        }
+//      get texture size based on max font size (width or height)
+        textureSize = calculateTextureSize(maxSize);
 
-        // create an empty bitmap (alpha only)
-        Bitmap bitmap = Bitmap.createBitmap(textureSize, textureSize, Bitmap.Config.ALPHA_8);  // Create Bitmap
-        Canvas canvas = new Canvas(bitmap);           // Create Canvas for Rendering to Bitmap
-        bitmap.eraseColor(0x00000000);                // Set Transparent Background (ARGB)
 
         // calculate rows/columns
         // NOTE: while not required for anything, these may be useful to have :)
         colCnt = textureSize / cellWidth;               // Calculate Number of Columns
         rowCnt = (int) Math.ceil((float) CHAR_CNT / (float) colCnt);  // Calculate Number of Rows
 
-        // render each of the characters to the canvas (ie. build the font map)
-        float x = fontPadX;                             // Set Start Position (X)
-        float y = (cellHeight - 1) - fontDescent - fontPadY;  // Set Start Position (Y)
-        for (char c = CHAR_START; c <= CHAR_END; c++) {  // FOR Each Character
-            s[0] = c;                                    // Set Character to Draw
-            canvas.drawText(s, 0, 1, x, y, paint);     // Draw Character
-            x += cellWidth;                              // Move to Next Character
-            if ((x + cellWidth - fontPadX) > textureSize) {  // IF End of Line Reached
-                x = fontPadX;                             // Set X for New Row
-                y += cellHeight;                          // Move Down a Row
-            }
-        }
-        s[0] = CHAR_NONE;                               // Set Character to Use for NONE
-        canvas.drawText(s, 0, 1, x, y, paint);        // Draw Character
 
-        // save the bitmap in a texture
-        textureId = TextureHelper.loadTexture(bitmap);
-
+        buildFontMap(paint);
         // setup the array of character texture regions
-        x = 0;                                          // Initialize X
-        y = 0;                                          // Initialize Y
+        createTextureRegions();
+        // create full texture region
+        textureRgn = new TextureRegion(textureSize, textureSize, 0, 0, textureSize, textureSize);  // Create Full Texture Region
+
+        return true;
+    }
+
+    private Paint setUpPaint(String file, int size) {
+        Typeface tf = Typeface.createFromAsset(assets, file);  // Create the Typeface from Font File
+        Paint paint = new Paint();                      // Create Android Paint Instance
+        paint.setAntiAlias(true);                     // Enable Anti Alias
+        paint.setTextSize(size);                      // Set Text Size
+        paint.setColor(0xffffffff);                   // Set ARGB (White, Opaque)
+        paint.setTypeface(tf);                        // Set Typeface
+        return paint;
+    }
+
+    private void createTextureRegions() {
+        float x = 0;
+        float y = 0;
         for (int c = 0; c < CHAR_CNT; c++) {         // FOR Each Character (On Texture)
             charRgn[c] = new TextureRegion(textureSize, textureSize, x, y, cellWidth - 1, cellHeight - 1);  // Create Region for Character
             x += cellWidth;                              // Move to Next Char (Cell)
@@ -230,11 +195,65 @@ public class GLText {
                 y += cellHeight;                          // Move to Next Row (Cell)
             }
         }
+    }
 
-        // create full texture region
-        textureRgn = new TextureRegion(textureSize, textureSize, 0, 0, textureSize, textureSize);  // Create Full Texture Region
+    private void determineCharacterWidths(Paint paint) {
+        char[] characterArray = new char[1];                         // Create Character Array
+        charWidthMax = charHeight = 0;                  // Reset Character Width/Height Maximums
+        float[] workingWidth = new float[2];                       // Working Width Value
+        int cnt = 0;                                    // Array Counter
+        for (char c = CHAR_START; c <= CHAR_END; c++) {  // FOR Each Character
+            characterArray[0] = c;                                    // Set Character
+            paint.getTextWidths(characterArray, 0, 1, workingWidth);           // Get Character Bounds
+            charWidths[cnt] = workingWidth[0];                      // Get Width
+            if (charWidths[cnt] > charWidthMax)        // IF Width Larger Than Max Width
+                charWidthMax = charWidths[cnt];           // Save New Max Width
+            cnt++;                                       // Advance Array Counter
+        }
+        characterArray[0] = CHAR_NONE;                               // Set Unknown Character
+        paint.getTextWidths(characterArray, 0, 1, workingWidth);              // Get Character Bounds
+        charWidths[cnt] = workingWidth[0];                         // Get Width
+        if (charWidths[cnt] > charWidthMax) {           // IF Width Larger Than Max Width
+            charWidthMax = charWidths[cnt];              // Save New Max Width
+        }
+    }
 
-        return true;
+    private void buildFontMap(Paint paint) {
+        char[] characterArray = new char[1];
+        Bitmap bitmap = Bitmap.createBitmap(textureSize, textureSize, Bitmap.Config.ALPHA_8);
+        Canvas canvas = new Canvas(bitmap);
+        bitmap.eraseColor(0x00000000);
+
+        float x = fontPadX;                             // Set Start Position (X)
+        float y = (cellHeight - 1) - fontDescent - fontPadY;  // Set Start Position (Y)
+        for (char c = CHAR_START; c <= CHAR_END; c++) {  // FOR Each Character
+            characterArray[0] = c;                                    // Set Character to Draw
+            canvas.drawText(characterArray, 0, 1, x, y, paint);     // Draw Character
+            x += cellWidth;                              // Move to Next Character
+            if ((x + cellWidth - fontPadX) > textureSize) {  // IF End of Line Reached
+                x = fontPadX;                             // Set X for New Row
+                y += cellHeight;                          // Move Down a Row
+            }
+        }
+        characterArray[0] = CHAR_NONE;                               // Set Character to Use for NONE
+        canvas.drawText(characterArray, 0, 1, x, y, paint);        // Draw Character
+
+        // save the bitmap in a texture
+        textureId = TextureHelper.loadTexture(bitmap);
+    }
+
+    private int calculateTextureSize(int maxSize) {
+        // NOTE: these values are fixed, based on the defined characters. when
+        // changing start/end characters (CHAR_START/CHAR_END) this will need adjustment too!
+        if (maxSize <= 24) {
+             return 256;
+        } else if (maxSize <= 40) {
+            return  512;
+        } else if (maxSize <= 80) {
+            return  1024;
+        } else {
+            return 2048;
+        }
     }
 
     //--Begin/End Text Drawing--//
