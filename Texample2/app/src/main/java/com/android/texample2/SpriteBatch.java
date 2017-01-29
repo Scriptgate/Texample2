@@ -35,11 +35,16 @@ public class SpriteBatch {
      */
     public SpriteBatch(int maxSprites, Program program) {
         this.vertexBuffer = new float[maxSprites * VERTICES_PER_SPRITE * VERTEX_SIZE];  // Create Vertex Buffer
-        this.vertices = new Vertices(maxSprites * VERTICES_PER_SPRITE, maxSprites * INDICES_PER_SPRITE);  // Create Rendering Vertices
         this.bufferIndex = 0;                           // Reset Buffer Index
         this.maxSprites = maxSprites;                   // Save Maximum Sprites
         this.numSprites = 0;                            // Clear Sprite Counter
 
+        initializeVertices(maxSprites);
+        mMVPMatricesHandle = glGetUniformLocation(program.getHandle(), "u_MVPMatrix");
+    }
+
+    private void initializeVertices(int maxSprites) {
+        this.vertices = new Vertices(maxSprites * VERTICES_PER_SPRITE, maxSprites * INDICES_PER_SPRITE);  // Create Rendering Vertices
         short[] indices = new short[maxSprites * INDICES_PER_SPRITE];  // Create Temp Index Buffer
         int len = indices.length;                       // Get Index Buffer Length
         short j = 0;                                    // Counter
@@ -52,7 +57,6 @@ public class SpriteBatch {
             indices[i + 5] = j;           // Calculate Index 5
         }
         vertices.setIndices(indices, 0, len);         // Set Index Buffer for Rendering
-        mMVPMatricesHandle = glGetUniformLocation(program.getHandle(), "u_MVPMatrix");
     }
 
     public void beginBatch(float[] vpMatrix) {

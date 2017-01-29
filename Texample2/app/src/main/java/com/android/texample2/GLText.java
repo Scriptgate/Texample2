@@ -136,10 +136,7 @@ public class GLText {
         Paint paint = setUpPaint(file, size);
 
         // get font metrics
-        Paint.FontMetrics fm = paint.getFontMetrics();  // Get Font Metrics
-        fontHeight = (float) Math.ceil(Math.abs(fm.bottom) + Math.abs(fm.top));  // Calculate Font Height
-        fontAscent = (float) Math.ceil(Math.abs(fm.ascent));  // Save Font Ascent
-        fontDescent = (float) Math.ceil(Math.abs(fm.descent));  // Save Font Descent
+        loadFontMetrics(paint);
 
         //determine the width of each character (including unknown character) also determine the maximum character width
         determineCharacterWidths(paint);
@@ -172,6 +169,13 @@ public class GLText {
         textureRgn = new TextureRegion(textureSize, textureSize, 0, 0, textureSize, textureSize);  // Create Full Texture Region
 
         return true;
+    }
+
+    private void loadFontMetrics(Paint paint) {
+        Paint.FontMetrics fm = paint.getFontMetrics();  // Get Font Metrics
+        fontHeight = (float) Math.ceil(Math.abs(fm.bottom) + Math.abs(fm.top));  // Calculate Font Height
+        fontAscent = (float) Math.ceil(Math.abs(fm.ascent));  // Save Font Ascent
+        fontDescent = (float) Math.ceil(Math.abs(fm.descent));  // Save Font Descent
     }
 
     private Paint setUpPaint(String file, int size) {

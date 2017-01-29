@@ -11,14 +11,14 @@ import static java.nio.ByteOrder.nativeOrder;
 public class Vertices {
 
     //--Constants--//
-    final static int POSITION_CNT_2D = 2;              // Number of Components in Vertex Position for 2D
+    private final static int POSITION_CNT_2D = 2;              // Number of Components in Vertex Position for 2D
     final static int POSITION_CNT_3D = 3;              // Number of Components in Vertex Position for 3D
     final static int COLOR_CNT = 4;                    // Number of Components in Vertex Color
     final static int TEXCOORD_CNT = 2;                 // Number of Components in Vertex Texture Coords
     final static int NORMAL_CNT = 3;                   // Number of Components in Vertex Normal
     private static final int MVP_MATRIX_INDEX_CNT = 1; // Number of Components in MVP matrix index
 
-    final static int INDEX_SIZE = Short.SIZE / 8;      // Index Byte Size (Short.SIZE = bits)
+    private final static int INDEX_SIZE = Short.SIZE / 8;      // Index Byte Size (Short.SIZE = bits)
 
     private static final String TAG = "Vertices";
 
