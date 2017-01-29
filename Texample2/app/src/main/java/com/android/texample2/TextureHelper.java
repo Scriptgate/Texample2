@@ -23,13 +23,6 @@ public class TextureHelper {
         glGenTextures(1, textureHandle, 0);
 
         if (textureHandle[0] != 0) {
-//	        final BitmapFactory.Options options = new BitmapFactory.Options();
-//	        options.inScaled = false;   // No pre-scaling
-
-            // Read in the resource
-//	        final Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), resourceId, options);
-
-            // Bind to the texture in OpenGL
             glBindTexture(GL_TEXTURE_2D, textureHandle[0]);
 
             // Set filtering

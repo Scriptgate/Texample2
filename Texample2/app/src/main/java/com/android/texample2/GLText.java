@@ -73,10 +73,6 @@ public class GLText {
      * @param assets
      */
     public GLText(Program program, AssetManager assets) {
-        if (program == null) {
-            program = new BatchTextProgram();
-            program.init();
-        }
         this.assets = assets;                           // Save the Asset Manager Instance
 
         batch = new SpriteBatch(CHAR_BATCH_SIZE, program);  // Create Sprite Batch (with Defined Size)
@@ -114,17 +110,11 @@ public class GLText {
     }
 
     // Constructor using the default program (BatchTextProgram)
-    public GLText(AssetManager assets) {
-        this(null, assets);
+    public static GLText createBatchGLText(AssetManager assets) {
+        Program program = new BatchTextProgram();
+        program.init();
+        return new GLText(program, assets);
     }
-
-    //--Load Font--//
-    // description
-    //
-    // arguments:
-    //    file -
-    //    size -
-    //    padX, padY -
 
     /**
      * Load font
@@ -244,8 +234,7 @@ public class GLText {
         // create full texture region
         textureRgn = new TextureRegion(textureSize, textureSize, 0, 0, textureSize, textureSize);  // Create Full Texture Region
 
-        // return success
-        return true;                                    // Return Success
+        return true;
     }
 
     //--Begin/End Text Drawing--//
@@ -291,20 +280,21 @@ public class GLText {
 
     /**
      * draw text at the specified x,y position
-     * @param text the string to draw
-     * @param x the x-position to draw text at (bottom left of text; including descent)
-     * @param y the y-position to draw text at (bottom left of text; including descent)
-     * @param z the z-position to draw text at (bottom left of text; including descent)
+     *
+     * @param text      the string to draw
+     * @param x         the x-position to draw text at (bottom left of text; including descent)
+     * @param y         the y-position to draw text at (bottom left of text; including descent)
+     * @param z         the z-position to draw text at (bottom left of text; including descent)
      * @param angleDegX the x-position of the angle to rotate the text
      * @param angleDegY the y-position of the angle to rotate the text
      * @param angleDegZ the z-position of the angle to rotate the text
      */
     public void draw(String text, float x, float y, float z, float angleDegX, float angleDegY, float angleDegZ) {
-        float chrHeight = cellHeight * scaleY;          // Calculate Scaled Character Height
-        float chrWidth = cellWidth * scaleX;            // Calculate Scaled Character Width
-        int len = text.length();                        // Get String Length
-        x += (chrWidth / 2.0f) - (fontPadX * scaleX);  // Adjust Start X
-        y += (chrHeight / 2.0f) - (fontPadY * scaleY);  // Adjust Start Y
+        float scaledCharacterHeight = cellHeight * scaleY;
+        float scaledCharacterWidth = cellWidth * scaleX;
+        int numberOfCharacters = text.length();
+        x += (scaledCharacterWidth / 2.0f) - (fontPadX * scaleX);  // Adjust Start X
+        y += (scaledCharacterHeight / 2.0f) - (fontPadY * scaleY);  // Adjust Start Y
 
         // create a model matrix based on x, y and angleDeg
         float[] modelMatrix = new float[16];
@@ -317,12 +307,12 @@ public class GLText {
         float letterX, letterY;
         letterX = letterY = 0;
 
-        for (int i = 0; i < len; i++) {              // FOR Each Character in String
+        for (int i = 0; i < numberOfCharacters; i++) {              // FOR Each Character in String
             int c = (int) text.charAt(i) - CHAR_START;  // Calculate Character Index (Offset by First Char in Font)
             if (c < 0 || c >= CHAR_CNT)                // IF Character Not In Font
                 c = CHAR_UNKNOWN;                         // Set to Unknown Character Index
             //TODO: optimize - applying the same model matrix to all the characters in the string
-            batch.drawSprite(letterX, letterY, chrWidth, chrHeight, charRgn[c], modelMatrix);  // Draw the Character
+            batch.drawSprite(letterX, letterY, scaledCharacterWidth, scaledCharacterHeight, charRgn[c], modelMatrix);  // Draw the Character
             letterX += (charWidths[c] + spaceX) * scaleX;    // Advance X Position by Scaled Character Width
         }
     }
@@ -339,54 +329,63 @@ public class GLText {
         draw(text, x, y, 0, 0);
     }
 
-    //--Draw Text Centered--//
-    // D: draw text CENTERED at the specified x,y position
-    // A: text - the string to draw
-    //    x, y, z - the x, y, z position to draw text at (bottom left of text)
-    //    angleDeg - angle to rotate the text
-    // R: the total width of the text that was drawn
-    public float drawC(String text, float x, float y, float z, float angleDegX, float angleDegY, float angleDegZ) {
+    /**
+     * draw text CENTERED at the specified x,y position
+     * @param text the string to draw
+     * @param x the x position to draw text at (bottom left of text)
+     * @param y the y position to draw text at (bottom left of text)
+     * @param z the z position to draw text at (bottom left of text)
+     * @param angleDegX the x position of the angle to rotate the text
+     * @param angleDegY the y position of the angle to rotate the text
+     * @param angleDegZ the z position of the angle to rotate the text
+     * @return the total width of the text that was drawn
+     */
+    public float drawCentered(String text, float x, float y, float z, float angleDegX, float angleDegY, float angleDegZ) {
+        float textLength = getLength(text);
+        draw(text, x - (textLength / 2.0f), y - (getScaledCharHeight() / 2.0f), z, angleDegX, angleDegY, angleDegZ);  // Draw Text Centered
+        return textLength;
+    }
+
+    public float drawCentered(String text, float x, float y, float z, float angleDegZ) {
+        return drawCentered(text, x, y, z, 0, 0, angleDegZ);
+    }
+
+    public float drawCentered(String text, float x, float y, float angleDeg) {
+        return drawCentered(text, x, y, 0, angleDeg);
+    }
+
+    public float drawCentered(String text, float x, float y) {
         float len = getLength(text);                  // Get Text Length
-        draw(text, x - (len / 2.0f), y - (getCharHeight() / 2.0f), z, angleDegX, angleDegY, angleDegZ);  // Draw Text Centered
-        return len;                                     // Return Length
-    }
-
-    public float drawC(String text, float x, float y, float z, float angleDegZ) {
-        return drawC(text, x, y, z, 0, 0, angleDegZ);
-    }
-
-    public float drawC(String text, float x, float y, float angleDeg) {
-        return drawC(text, x, y, 0, angleDeg);
-    }
-
-    public float drawC(String text, float x, float y) {
-        float len = getLength(text);                  // Get Text Length
-        return drawC(text, x - (len / 2.0f), y - (getCharHeight() / 2.0f), 0);
+        return drawCentered(text, x - (len / 2.0f), y - (getScaledCharHeight() / 2.0f), 0);
 
     }
 
-    public float drawCX(String text, float x, float y) {
-        float len = getLength(text);                  // Get Text Length
-        draw(text, x - (len / 2.0f), y);            // Draw Text Centered (X-Axis Only)
-        return len;                                     // Return Length
+    public float drawCenteredOnXAxis(String text, float x, float y) {
+        float textLength = getLength(text);
+        draw(text, x - (textLength / 2.0f), y);
+        return textLength;
     }
 
-    public void drawCY(String text, float x, float y) {
-        draw(text, x, y - (getCharHeight() / 2.0f));  // Draw Text Centered (Y-Axis Only)
+    public void drawCenteredOnYAxis(String text, float x, float y) {
+        draw(text, x, y - (getScaledCharHeight() / 2.0f));
     }
 
-    //--Set Scale--//
-    // D: set the scaling to use for the font
-    // A: scale - uniform scale for both x and y axis scaling
-    //    sx, sy - separate x and y axis scaling factors
-    // R: [none]
+    /**
+     * set the scaling to use for the font
+     * @param scale uniform scale for both x and y axis scaling
+     */
     public void setScale(float scale) {
-        scaleX = scaleY = scale;                        // Set Uniform Scale
+        scaleX = scaleY = scale;
     }
 
+    /**
+     * set the scaling to use for the font
+     * @param sx x axis scale
+     * @param sy y axis scale
+     */
     public void setScale(float sx, float sy) {
-        scaleX = sx;                                    // Set X Scale
-        scaleY = sy;                                    // Set Y Scale
+        scaleX = sx;
+        scaleY = sy;
     }
 
     //--Get Scale--//
@@ -394,42 +393,43 @@ public class GLText {
     // A: [none]
     // R: the x/y scale currently used for scale
     public float getScaleX() {
-        return scaleX;                                  // Return X Scale
+        return scaleX;
     }
 
     public float getScaleY() {
-        return scaleY;                                  // Return Y Scale
+        return scaleY;
     }
 
-    //--Set Space--//
-    // D: set the spacing (unscaled; ie. pixel size) to use for the font
-    // A: space - space for x axis spacing
-    // R: [none]
+    /**
+     * set the spacing (unscaled; ie. pixel size) to use for the font
+     * @param space for x axis spacing
+     */
     public void setSpace(float space) {
-        spaceX = space;                                 // Set Space
+        spaceX = space;
     }
 
-    //--Get Space--//
-    // D: get the current spacing used for the font
-    // A: [none]
-    // R: the x/y space currently used for scale
+    /**
+     * get the current spacing used for the font
+     * @return the x space currently used for scale
+     */
     public float getSpace() {
-        return spaceX;                                  // Return X Space
+        return spaceX;
     }
 
-    //--Get Length of a String--//
-    // D: return the length of the specified string if rendered using current settings
-    // A: text - the string to get length for
-    // R: the length of the specified string (pixels)
+    /**
+     * return the length of the specified string if rendered using current settings
+     * @param text the string to get length for
+     * @return the length of the specified string (pixels)
+     */
     public float getLength(String text) {
-        float len = 0.0f;                               // Working Length
-        int strLen = text.length();                     // Get String Length (Characters)
-        for (int i = 0; i < strLen; i++) {           // For Each Character in String (Except Last
-            int c = (int) text.charAt(i) - CHAR_START;  // Calculate Character Index (Offset by First Char in Font)
-            len += (charWidths[c] * scaleX);           // Add Scaled Character Width to Total Length
+        float result = 0.0f;
+        int numberOfCharacters = text.length();
+        for (int i = 0; i < numberOfCharacters; i++) {           // For Each Character in String (Except Last
+            int characterIndex = (int) text.charAt(i) - CHAR_START;  // Calculate Character Index (Offset by First Char in Font)
+            result += (charWidths[characterIndex] * scaleX);           // Add Scaled Character Width to Total Length
         }
-        len += (strLen > 1 ? ((strLen - 1) * spaceX) * scaleX : 0);  // Add Space Length
-        return len;                                     // Return Total Length
+        result += (numberOfCharacters > 1 ? ((numberOfCharacters - 1) * spaceX) * scaleX : 0);  // Add Space Length
+        return result;                                     // Return Total Length
     }
 
     //--Get Width/Height of Character--//
@@ -439,16 +439,16 @@ public class GLText {
     // A: chr - the character to get width for
     // R: the requested character size (scaled)
     public float getCharWidth(char chr) {
-        int c = chr - CHAR_START;                       // Calculate Character Index (Offset by First Char in Font)
-        return (charWidths[c] * scaleX);              // Return Scaled Character Width
+        int characterIndex = chr - CHAR_START;                       // Calculate Character Index (Offset by First Char in Font)
+        return charWidths[characterIndex] * scaleX;              // Return Scaled Character Width
     }
 
-    public float getCharWidthMax() {
-        return (charWidthMax * scaleX);               // Return Scaled Max Character Width
+    public float getScaledMaxCharWidth() {
+        return charWidthMax * scaleX;
     }
 
-    public float getCharHeight() {
-        return (charHeight * scaleY);                 // Return Scaled Character Height
+    public float getScaledCharHeight() {
+        return charHeight * scaleY;
     }
 
     //--Get Font Metrics--//
@@ -456,29 +456,32 @@ public class GLText {
     // A: [none]
     // R: the requested font metric (scaled)
     public float getAscent() {
-        return (fontAscent * scaleY);                 // Return Font Ascent
+        return fontAscent * scaleY;
     }
 
     public float getDescent() {
-        return (fontDescent * scaleY);                // Return Font Descent
+        return fontDescent * scaleY;
     }
 
-    public float getHeight() {
-        return (fontHeight * scaleY);                 // Return Font Height (Actual)
+    public float getActualHeight() {
+        return (fontHeight * scaleY);
     }
 
-    //--Draw Font Texture--//
-    // D: draw the entire font texture (NOTE: for testing purposes only)
-    // A: width, height - the width and height of the area to draw to. this is used
-    //    to draw the texture to the top-left corner.
-    //    vpMatrix - View and projection matrix to use
+    /**
+     * draw the entire font texture (NOTE: for testing purposes only)
+     * @param width the width of the area to draw to. this is used to draw the texture to the top-left corner.
+     * @param height the height of the area to draw to. this is used to draw the texture to the top-left corner.
+     * @param vpMatrix View and projection matrix to use
+     */
     public void drawTexture(int width, int height, float[] vpMatrix) {
         initDraw(1.0f, 1.0f, 1.0f, 1.0f);
 
-        batch.beginBatch(vpMatrix);                  // Begin Batch (Bind Texture)
-        float[] idMatrix = new float[16];
-        Matrix.setIdentityM(idMatrix, 0);
-        batch.drawSprite(width - (textureSize / 2), height - (textureSize / 2), textureSize, textureSize, textureRgn, idMatrix);
+        batch.beginBatch(vpMatrix);
+        {
+            float[] idMatrix = new float[16];
+            Matrix.setIdentityM(idMatrix, 0);
+            batch.drawSprite(width - (textureSize / 2), height - (textureSize / 2), textureSize, textureSize, textureRgn, idMatrix);
+        }
         batch.endBatch();
     }
 }

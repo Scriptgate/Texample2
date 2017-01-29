@@ -8,6 +8,7 @@ import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 
 import static android.opengl.GLES20.*;
+import static com.android.texample2.GLText.createBatchGLText;
 
 public class Texample2Renderer implements GLSurfaceView.Renderer {
 
@@ -31,11 +32,11 @@ public class Texample2Renderer implements GLSurfaceView.Renderer {
         glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 
         // Create the GLText
-        glText = new GLText(activityContext.getAssets());
+        glText = createBatchGLText(activityContext.getAssets());
 
         // Load the font from file (set size + padding), creates the texture
         // NOTE: after a successful call to this the font is ready for rendering!
-        glText.load("Roboto-Regular.ttf", 14, 2, 2);  // Create Font (Height: 14 Pixels / X+Y Padding 2 Pixels)
+        glText.load("Roboto-Regular.ttf", 30, 2, 2);  // Create Font (Height: 14 Pixels / X+Y Padding 2 Pixels)
 
         // enable texture + alpha blending
         glEnable(GL_BLEND);
@@ -55,15 +56,15 @@ public class Texample2Renderer implements GLSurfaceView.Renderer {
 
         // TEST: render some strings with the font
         glText.begin(1.0f, 1.0f, 1.0f, 1.0f, mVPMatrix);         // Begin Text Rendering (Set Color WHITE)
-        glText.drawC("Test String 3D!", 0f, 0f, 0f, 0, -30, 0);
-//		glText.drawC( "Test String :)", 0, 0, 0 );
+        glText.drawCentered("Test String 3D!", 0f, 0f, 0f, 0, -30, 0);
+//		glText.drawCentered( "Test String :)", 0, 0, 0 );
         glText.draw("Diagonal 1", 40, 40, 40);
         glText.draw("Column 1", 100, 100, 90);
         glText.end();
 
         glText.begin(0.0f, 0.0f, 1.0f, 1.0f, mVPMatrix);         // Begin Text Rendering (Set Color BLUE)
         glText.draw("More Lines...", 50, 200);
-        glText.draw("The End.", 50, 200 + glText.getCharHeight(), 180);
+        glText.draw("The End.", 50, 200 + glText.getScaledCharHeight(), 180);
         glText.end();
     }
 
