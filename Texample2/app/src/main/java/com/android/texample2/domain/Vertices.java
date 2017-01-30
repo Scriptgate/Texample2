@@ -1,10 +1,10 @@
-package com.texample2.font;
+package com.android.texample2.domain;
 
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
 import static android.opengl.GLES20.*;
-import static com.texample2.android.AttributeVariable.*;
+import static com.android.texample2.AttributeVariable.*;
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.ByteOrder.nativeOrder;
 

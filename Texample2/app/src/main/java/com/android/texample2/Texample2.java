@@ -1,7 +1,7 @@
 // This is based on the OpenGL ES 1.0 sample application from the Android Developer website:
 // http://developer.android.com/resources/tutorials/opengl/opengl-es10.html
 
-package com.texample2.android;
+package com.android.texample2;
 
 import android.app.Activity;
 import android.content.Context;

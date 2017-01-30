@@ -1,4 +1,4 @@
-package com.texample2.android;
+package com.android.texample2;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -7,12 +7,12 @@ import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 
-import com.texample2.font.GLText;
+import com.android.texample2.domain.GLText;
 
 import static android.opengl.GLES20.*;
-import static com.texample2.font.GLText.createBatchGLText;
+import static com.android.texample2.domain.GLText.createBatchGLText;
 
-class Texample2Renderer implements GLSurfaceView.Renderer {
+public class Texample2Renderer implements GLSurfaceView.Renderer {
 
     private static final String TAG = "TexampleRenderer";
     private GLText glText;
@@ -58,7 +58,7 @@ class Texample2Renderer implements GLSurfaceView.Renderer {
 
         // TEST: render some strings with the font
         glText.begin(1.0f, 1.0f, 1.0f, 1.0f, mVPMatrix);         // Begin Text Rendering (Set Color WHITE)
-        glText.drawCentered("Test String 3D!", 0f, 0f, 0f, 0, -5, 0);
+        glText.drawCentered("Test String 3D!", 0f, 0f, 0f, 0, -30, 0);
 //		glText.drawCentered( "Test String :)", 0, 0, 0 );
         glText.draw("Diagonal 1", 40, 40, 40);
         glText.draw("Column 1", 100, 100, 90);

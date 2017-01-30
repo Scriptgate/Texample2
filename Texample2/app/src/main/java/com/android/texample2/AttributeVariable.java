@@ -1,8 +1,8 @@
-package com.texample2.android;
+package com.android.texample2;
 
 
 public enum AttributeVariable {
-    POSITION(1, "a_Posit ion"),
+    POSITION(1, "a_Position"),
     TEXTURE_COORDINATE(2, "a_TexCoordinate"),
     MVP_MATRIX(3, "a_MVPMatrixIndex");
 

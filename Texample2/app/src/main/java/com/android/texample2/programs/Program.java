@@ -1,9 +1,9 @@
-package com.texample2.android.programs;
+package com.android.texample2.programs;
 
 import android.opengl.GLES20;
 import android.util.Log;
 
-import com.texample2.android.AttributeVariable;
+import com.android.texample2.AttributeVariable;
 
 import static android.opengl.GLES20.*;
 

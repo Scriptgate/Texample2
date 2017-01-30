@@ -7,7 +7,7 @@
 // origin, and the (x,y) positions are relative to that, as well as the
 // bottom-left of the string to render.
 
-package com.texample2.font;
+package com.android.texample2.domain;
 
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
@@ -16,8 +16,8 @@ import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.opengl.Matrix;
 
-import com.texample2.android.programs.BatchTextProgram;
-import com.texample2.android.programs.Program;
+import com.android.texample2.programs.BatchTextProgram;
+import com.android.texample2.programs.Program;
 
 import static android.opengl.GLES20.*;
 

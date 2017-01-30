@@ -1,9 +1,9 @@
-package com.texample2.android.programs;
+package com.android.texample2.programs;
 
-import com.texample2.android.AttributeVariable;
+import com.android.texample2.AttributeVariable;
 
-import static com.texample2.android.AttributeVariable.*;
-import static com.texample2.android.RawResourceReader.readShaderFileFromResource;
+import static com.android.texample2.AttributeVariable.*;
+import static com.android.texample2.RawResourceReader.readShaderFileFromResource;
 
 
 public class BatchTextProgram extends Program {
