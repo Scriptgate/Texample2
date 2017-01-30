@@ -1,14 +1,14 @@
-package com.android.texample2;
+package com.texample2.font;
 
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
 import static android.opengl.GLES20.*;
-import static com.android.texample2.AttributeVariable.*;
+import static com.texample2.android.AttributeVariable.*;
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.ByteOrder.nativeOrder;
 
-public class Vertices {
+class Vertices {
 
     //--Constants--//
     private final static int POSITION_CNT_2D = 2;              // Number of Components in Vertex Position for 2D

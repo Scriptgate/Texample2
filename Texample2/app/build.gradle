@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 15
+    compileSdkVersion 22
     buildToolsVersion "23.0.3"
 
     defaultConfig {
-        applicationId "com.android.texample2"
+        applicationId "com.texample2"
         minSdkVersion 8
-        targetSdkVersion 15
+        targetSdkVersion 22
     }
 
     buildTypes {

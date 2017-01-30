@@ -1,4 +1,4 @@
-package com.android.texample2;
+package com.texample2.android;
 
 
 import java.io.BufferedReader;

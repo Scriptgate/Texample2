@@ -1,4 +1,4 @@
-package com.android.texample2;
+package com.texample2.font;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -7,7 +7,7 @@ import android.opengl.GLUtils;
 
 import static android.opengl.GLES20.*;
 
-public class TextureHelper {
+class TextureHelper {
 
     public static int loadTexture(final Context context, final int resourceId) {
         final BitmapFactory.Options options = new BitmapFactory.Options();

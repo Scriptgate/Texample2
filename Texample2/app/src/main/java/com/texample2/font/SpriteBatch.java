@@ -1,6 +1,6 @@
-package com.android.texample2;
+package com.texample2.font;
 
-import com.android.texample2.programs.Program;
+import com.texample2.android.programs.Program;
 
 import android.opengl.Matrix;
 
@@ -9,7 +9,7 @@ import java.util.List;
 import static android.opengl.GLES20.*;
 import static java.util.Arrays.asList;
 
-public class SpriteBatch {
+class SpriteBatch {
 
     private final static int VERTEX_SIZE = 5;                  // Vertex Size (in Components) ie. (X,Y,U,V,M), M is MVP matrix index
     private final static int VERTICES_PER_SPRITE = 4;          // Vertices Per Sprite
@@ -47,14 +47,14 @@ public class SpriteBatch {
         this.vertices = new Vertices(maxSprites * VERTICES_PER_SPRITE, maxSprites * INDICES_PER_SPRITE);  // Create Rendering Vertices
         short[] indices = new short[maxSprites * INDICES_PER_SPRITE];  // Create Temp Index Buffer
         int len = indices.length;                       // Get Index Buffer Length
-        short j = 0;                                    // Counter
-        for (int i = 0; i < len; i += INDICES_PER_SPRITE, j += VERTICES_PER_SPRITE) {  // FOR Each Index Set (Per Sprite)
-            indices[i] = j;           // Calculate Index 0
-            indices[i + 1] = (short) (j + 1);           // Calculate Index 1
-            indices[i + 2] = (short) (j + 2);           // Calculate Index 2
-            indices[i + 3] = (short) (j + 2);           // Calculate Index 3
-            indices[i + 4] = (short) (j + 3);           // Calculate Index 4
-            indices[i + 5] = j;           // Calculate Index 5
+        short counter = 0;                                    // Counter
+        for (int i = 0; i < len; i += INDICES_PER_SPRITE, counter += VERTICES_PER_SPRITE) {  // FOR Each Index Set (Per Sprite)
+            indices[i] = counter;           // Calculate Index 0
+            indices[i + 1] = (short) (counter + 1);           // Calculate Index 1
+            indices[i + 2] = (short) (counter + 2);           // Calculate Index 2
+            indices[i + 3] = (short) (counter + 2);           // Calculate Index 3
+            indices[i + 4] = (short) (counter + 3);           // Calculate Index 4
+            indices[i + 5] = counter;           // Calculate Index 5
         }
         vertices.setIndices(indices, 0, len);         // Set Index Buffer for Rendering
     }
