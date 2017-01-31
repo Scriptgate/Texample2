@@ -4,7 +4,6 @@
 package com.android.texample2;
 
 import android.app.Activity;
-import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.view.Window;
@@ -21,7 +20,7 @@ public class Texample2 extends Activity {
         getWindow().setFlags(FLAG_FULLSCREEN, FLAG_FULLSCREEN);
         // Create a GLSurfaceView instance and set it
         // as the ContentView for this Activity.
-        glView = new TexampleSurfaceView(this);
+        glView = new Texample2SurfaceView(this);
         setContentView(glView);
     }
 
@@ -52,13 +51,3 @@ public class Texample2 extends Activity {
     }
 }
 
-class TexampleSurfaceView extends GLSurfaceView {
-
-    public TexampleSurfaceView(Context context) {
-        super(context);
-
-        setEGLContextClientVersion(2);
-
-        setRenderer(new Texample2Renderer(context));
-    }
-}

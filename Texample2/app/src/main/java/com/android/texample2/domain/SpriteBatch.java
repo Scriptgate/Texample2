@@ -22,7 +22,7 @@ class SpriteBatch {
     private int maxSprites;                                    // Maximum Sprites Allowed in Buffer
     private int numSprites;                                    // Number of Sprites Currently in Buffer
     private float[] viewProjectionMatrix;                            // View and projection matrix specified at begin
-    private float[] uMVPMatrices = new float[GLText.CHAR_BATCH_SIZE * 16]; // MVP matrix array to pass to shader
+    private float[] uMVPMatrices; // MVP matrix array to pass to shader
     private int mMVPMatricesHandle;                            // shader handle of the MVP matrix array
     private float[] mMVPMatrix = new float[16];                // used to calculate MVP matrix of each sprite
 
@@ -34,6 +34,7 @@ class SpriteBatch {
      * @param program    program to use when drawing
      */
     public SpriteBatch(int maxSprites, Program program) {
+        uMVPMatrices  = new float[maxSprites * 16];
         this.vertexBuffer = new float[maxSprites * VERTICES_PER_SPRITE * VERTEX_SIZE];  // Create Vertex Buffer
         this.bufferIndex = 0;                           // Reset Buffer Index
         this.maxSprites = maxSprites;                   // Save Maximum Sprites
@@ -64,7 +65,6 @@ class SpriteBatch {
         bufferIndex = 0;                                // Reset Buffer Index (Empty)
         viewProjectionMatrix = vpMatrix;
     }
-
 
     /**
      * Signal the end of a batch. Render the batched sprites
@@ -127,9 +127,7 @@ class SpriteBatch {
         Matrix.multiplyMM(mMVPMatrix, 0, viewProjectionMatrix, 0, modelMatrix, 0);
 
         //TODO: make sure numSprites < 24
-        for (int i = 0; i < 16; ++i) {
-            uMVPMatrices[numSprites * 16 + i] = mMVPMatrix[i];
-        }
+        System.arraycopy(mMVPMatrix, 0, uMVPMatrices, numSprites * 16, 16);
 
         numSprites++;
     }

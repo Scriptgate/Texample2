@@ -33,9 +33,7 @@ public class GLText {
     private final static int FONT_SIZE_MIN = 6;         // Minumum Font Size (Pixels)
     private final static int FONT_SIZE_MAX = 180;       // Maximum Font Size (Pixels)
 
-    final static int CHAR_BATCH_SIZE = 24;     // Number of Characters to Render Per Batch
-    // must be the same as the size of u_MVPMatrix
-    // in BatchTextProgram
+    private final static int CHAR_BATCH_SIZE = 24;     // Number of Characters to Render Per Batch must be the same as the size of u_MVPMatrix in BatchTextProgram
     private static final String TAG = "GLTEXT";
 
     //--Members--//
@@ -65,6 +63,10 @@ public class GLText {
     private Program mProgram;                           // OpenGL Program object
     private int mColorHandle;                           // Shader color handle
     private int mTextureUniformHandle;                 // Shader texture handle
+
+    public static GLTextBuilder createGLText() {
+        return new GLTextBuilder();
+    }
 
     /**
      * save program + asset manager, create arrays, and initialize the members
@@ -109,13 +111,6 @@ public class GLText {
         mTextureUniformHandle = glGetUniformLocation(mProgram.getHandle(), "u_Texture");
     }
 
-    // Constructor using the default program (BatchTextProgram)
-    public static GLText createBatchGLText(AssetManager assets) {
-        Program program = new BatchTextProgram();
-        program.init();
-        return new GLText(program, assets);
-    }
-
     /**
      * Load font
      * this will load the specified font file, create a texture for the defined character range, and setup all required values used to render with it.
@@ -124,13 +119,11 @@ public class GLText {
      * @param size Requested pixel size of font (height)
      * @param padX Extra padding per character on X-Axis to prevent overlapping characters.
      * @param padY Extra padding per character on Y-Axis to prevent overlapping characters.
-     * @return
+     * @return true if successful, false otherwise
      */
     public boolean load(String file, int size, int padX, int padY) {
-
-        // setup requested values
-        fontPadX = padX;                                // Set Requested X Axis Padding
-        fontPadY = padY;                                // Set Requested Y Axis Padding
+        fontPadX = padX;
+        fontPadY = padY;
 
         // load the font and setup paint instance for drawing
         Paint paint = setUpPaint(file, size);
@@ -260,139 +253,6 @@ public class GLText {
         }
     }
 
-    //--Begin/End Text Drawing--//
-    // D: call these methods before/after (respectively all draw() calls using a text instance
-    //    NOTE: color is set on a per-batch basis, and fonts should be 8-bit alpha only!!!
-    // A: red, green, blue - RGB values for font (default = 1.0)
-    //    alpha - optional alpha value for font (default = 1.0)
-    // 	  vpMatrix - View and projection matrix to use
-    // R: [none]
-    public void begin(float[] vpMatrix) {
-        begin(1.0f, 1.0f, 1.0f, 1.0f, vpMatrix);                // Begin with White Opaque
-    }
-
-    public void begin(float alpha, float[] vpMatrix) {
-        begin(1.0f, 1.0f, 1.0f, alpha, vpMatrix);               // Begin with White (Explicit Alpha)
-    }
-
-    public void begin(float red, float green, float blue, float alpha, float[] vpMatrix) {
-        initDraw(red, green, blue, alpha);
-        batch.beginBatch(vpMatrix);                             // Begin Batch
-    }
-
-    void initDraw(float red, float green, float blue, float alpha) {
-        glUseProgram(mProgram.getHandle()); // specify the program to use
-
-        // set color TODO: only alpha component works, text is always black #BUG
-        float[] color = {red, green, blue, alpha};
-        glUniform4fv(mColorHandle, 1, color, 0);
-        glEnableVertexAttribArray(mColorHandle);
-
-        glActiveTexture(GL_TEXTURE0);  // Set the active texture unit to texture unit 0
-
-        glBindTexture(GL_TEXTURE_2D, textureId); // Bind the texture to this unit
-
-        // Tell the texture uniform sampler to use this texture in the shader by binding to texture unit 0
-        glUniform1i(mTextureUniformHandle, 0);
-    }
-
-    public void end() {
-        batch.endBatch();
-        glDisableVertexAttribArray(mColorHandle);
-    }
-
-    /**
-     * draw text at the specified x,y position
-     *
-     * @param text      the string to draw
-     * @param x         the x-position to draw text at (bottom left of text; including descent)
-     * @param y         the y-position to draw text at (bottom left of text; including descent)
-     * @param z         the z-position to draw text at (bottom left of text; including descent)
-     * @param angleDegX the x-position of the angle to rotate the text
-     * @param angleDegY the y-position of the angle to rotate the text
-     * @param angleDegZ the z-position of the angle to rotate the text
-     */
-    public void draw(String text, float x, float y, float z, float angleDegX, float angleDegY, float angleDegZ) {
-        float scaledCharacterHeight = cellHeight * scaleY;
-        float scaledCharacterWidth = cellWidth * scaleX;
-        int numberOfCharacters = text.length();
-        x += (scaledCharacterWidth / 2.0f) - (fontPadX * scaleX);  // Adjust Start X
-        y += (scaledCharacterHeight / 2.0f) - (fontPadY * scaleY);  // Adjust Start Y
-
-        // create a model matrix based on x, y and angleDeg
-        float[] modelMatrix = new float[16];
-        Matrix.setIdentityM(modelMatrix, 0);
-        Matrix.translateM(modelMatrix, 0, x, y, z);
-        Matrix.rotateM(modelMatrix, 0, angleDegZ, 0, 0, 1);
-        Matrix.rotateM(modelMatrix, 0, angleDegX, 1, 0, 0);
-        Matrix.rotateM(modelMatrix, 0, angleDegY, 0, 1, 0);
-
-        float letterX, letterY;
-        letterX = letterY = 0;
-
-        for (int i = 0; i < numberOfCharacters; i++) {              // FOR Each Character in String
-            int c = (int) text.charAt(i) - CHAR_START;  // Calculate Character Index (Offset by First Char in Font)
-            if (c < 0 || c >= CHAR_CNT)                // IF Character Not In Font
-                c = CHAR_UNKNOWN;                         // Set to Unknown Character Index
-            //TODO: optimize - applying the same model matrix to all the characters in the string
-            batch.drawSprite(letterX, letterY, scaledCharacterWidth, scaledCharacterHeight, charRgn[c], modelMatrix);  // Draw the Character
-            letterX += (charWidths[c] + spaceX) * scaleX;    // Advance X Position by Scaled Character Width
-        }
-    }
-
-    public void draw(String text, float x, float y, float z, float angleDegZ) {
-        draw(text, x, y, z, 0, 0, angleDegZ);
-    }
-
-    public void draw(String text, float x, float y, float angleDeg) {
-        draw(text, x, y, 0, angleDeg);
-    }
-
-    public void draw(String text, float x, float y) {
-        draw(text, x, y, 0, 0);
-    }
-
-    /**
-     * draw text CENTERED at the specified x,y position
-     * @param text the string to draw
-     * @param x the x position to draw text at (bottom left of text)
-     * @param y the y position to draw text at (bottom left of text)
-     * @param z the z position to draw text at (bottom left of text)
-     * @param angleDegX the x position of the angle to rotate the text
-     * @param angleDegY the y position of the angle to rotate the text
-     * @param angleDegZ the z position of the angle to rotate the text
-     * @return the total width of the text that was drawn
-     */
-    public float drawCentered(String text, float x, float y, float z, float angleDegX, float angleDegY, float angleDegZ) {
-        float textLength = getLength(text);
-        draw(text, x - (textLength / 2.0f), y - (getScaledCharHeight() / 2.0f), z, angleDegX, angleDegY, angleDegZ);  // Draw Text Centered
-        return textLength;
-    }
-
-    public float drawCentered(String text, float x, float y, float z, float angleDegZ) {
-        return drawCentered(text, x, y, z, 0, 0, angleDegZ);
-    }
-
-    public float drawCentered(String text, float x, float y, float angleDeg) {
-        return drawCentered(text, x, y, 0, angleDeg);
-    }
-
-    public float drawCentered(String text, float x, float y) {
-        float len = getLength(text);                  // Get Text Length
-        return drawCentered(text, x - (len / 2.0f), y - (getScaledCharHeight() / 2.0f), 0);
-
-    }
-
-    public float drawCenteredOnXAxis(String text, float x, float y) {
-        float textLength = getLength(text);
-        draw(text, x - (textLength / 2.0f), y);
-        return textLength;
-    }
-
-    public void drawCenteredOnYAxis(String text, float x, float y) {
-        draw(text, x, y - (getScaledCharHeight() / 2.0f));
-    }
-
     /**
      * set the scaling to use for the font
      * @param scale uniform scale for both x and y axis scaling
@@ -490,6 +350,47 @@ public class GLText {
         return (fontHeight * scaleY);
     }
 
+    //--Begin/End Text Drawing--//
+    // D: call these methods before/after (respectively all draw() calls using a text instance
+    //    NOTE: color is set on a per-batch basis, and fonts should be 8-bit alpha only!!!
+    // A: red, green, blue - RGB values for font (default = 1.0)
+    //    alpha - optional alpha value for font (default = 1.0)
+    // 	  vpMatrix - View and projection matrix to use
+    // R: [none]
+    public void begin(float[] vpMatrix) {
+        begin(1.0f, 1.0f, 1.0f, 1.0f, vpMatrix);                // Begin with White Opaque
+    }
+
+    public void begin(float alpha, float[] vpMatrix) {
+        begin(1.0f, 1.0f, 1.0f, alpha, vpMatrix);               // Begin with White (Explicit Alpha)
+    }
+
+    public void begin(float red, float green, float blue, float alpha, float[] vpMatrix) {
+        initDraw(red, green, blue, alpha);
+        batch.beginBatch(vpMatrix);
+    }
+
+    private void initDraw(float red, float green, float blue, float alpha) {
+        glUseProgram(mProgram.getHandle()); // specify the program to use
+
+        // set color TODO: only alpha component works, text is always black #BUG
+        float[] color = {red, green, blue, alpha};
+        glUniform4fv(mColorHandle, 1, color, 0);
+        glEnableVertexAttribArray(mColorHandle);
+
+        glActiveTexture(GL_TEXTURE0);  // Set the active texture unit to texture unit 0
+
+        glBindTexture(GL_TEXTURE_2D, textureId); // Bind the texture to this unit
+
+        // Tell the texture uniform sampler to use this texture in the shader by binding to texture unit 0
+        glUniform1i(mTextureUniformHandle, 0);
+    }
+
+    public void end() {
+        batch.endBatch();
+        glDisableVertexAttribArray(mColorHandle);
+    }
+
     /**
      * draw the entire font texture (NOTE: for testing purposes only)
      * @param width the width of the area to draw to. this is used to draw the texture to the top-left corner.
@@ -503,8 +404,150 @@ public class GLText {
         {
             float[] idMatrix = new float[16];
             Matrix.setIdentityM(idMatrix, 0);
-            batch.drawSprite(width - (textureSize / 2), height - (textureSize / 2), textureSize, textureSize, textureRgn, idMatrix);
+            batch.drawSprite((width - textureSize) / 2, (height - textureSize) / 2, textureSize, textureSize, textureRgn, idMatrix);
         }
         batch.endBatch();
+    }
+
+    /**
+     * draw text at the specified x,y position
+     *
+     * @param text      the string to draw
+     * @param x         the x-position to draw text at (bottom left of text; including descent)
+     * @param y         the y-position to draw text at (bottom left of text; including descent)
+     * @param z         the z-position to draw text at (bottom left of text; including descent)
+     * @param angleDegX the x-position of the angle to rotate the text
+     * @param angleDegY the y-position of the angle to rotate the text
+     * @param angleDegZ the z-position of the angle to rotate the text
+     */
+    private void draw(String text, float x, float y, float z, float angleDegX, float angleDegY, float angleDegZ) {
+        float scaledCharacterHeight = cellHeight * scaleY;
+        float scaledCharacterWidth = cellWidth * scaleX;
+        int numberOfCharacters = text.length();
+        x += (scaledCharacterWidth / 2.0f) - (fontPadX * scaleX);  // Adjust Start X
+        y += (scaledCharacterHeight / 2.0f) - (fontPadY * scaleY);  // Adjust Start Y
+
+        // create a model matrix based on x, y and angleDeg
+        float[] modelMatrix = new float[16];
+        Matrix.setIdentityM(modelMatrix, 0);
+        Matrix.translateM(modelMatrix, 0, x, y, z);
+        Matrix.rotateM(modelMatrix, 0, angleDegZ, 0, 0, 1);
+        Matrix.rotateM(modelMatrix, 0, angleDegX, 1, 0, 0);
+        Matrix.rotateM(modelMatrix, 0, angleDegY, 0, 1, 0);
+
+        float letterX, letterY;
+        letterX = letterY = 0;
+
+        for (int i = 0; i < numberOfCharacters; i++) {              // FOR Each Character in String
+            int c = (int) text.charAt(i) - CHAR_START;  // Calculate Character Index (Offset by First Char in Font)
+            if (c < 0 || c >= CHAR_CNT)                // IF Character Not In Font
+                c = CHAR_UNKNOWN;                         // Set to Unknown Character Index
+            //TODO: optimize - applying the same model matrix to all the characters in the string
+            batch.drawSprite(letterX, letterY, scaledCharacterWidth, scaledCharacterHeight, charRgn[c], modelMatrix);  // Draw the Character
+            letterX += (charWidths[c] + spaceX) * scaleX;    // Advance X Position by Scaled Character Width
+        }
+    }
+
+    private void draw(String text, float x, float y, float z, float angleDegZ) {
+        draw(text, x, y, z, 0, 0, angleDegZ);
+    }
+
+    public void draw(String text, float x, float y, float angleDeg) {
+        draw(text, x, y, 0, angleDeg);
+    }
+
+    public void draw(String text, float x, float y) {
+        draw(text, x, y, 0, 0);
+    }
+
+    /**
+     * draw text CENTERED at the specified x,y position
+     * @param text the string to draw
+     * @param x the x position to draw text at (bottom left of text)
+     * @param y the y position to draw text at (bottom left of text)
+     * @param z the z position to draw text at (bottom left of text)
+     * @param angleDegX the x position of the angle to rotate the text
+     * @param angleDegY the y position of the angle to rotate the text
+     * @param angleDegZ the z position of the angle to rotate the text
+     * @return the total width of the text that was drawn
+     */
+    public float drawCentered(String text, float x, float y, float z, float angleDegX, float angleDegY, float angleDegZ) {
+        float textLength = getLength(text);
+        float centeredX = x - (textLength / 2.0f);
+        float centeredY = y - (getScaledCharHeight() / 2.0f);
+        draw(text, centeredX, centeredY, z, angleDegX, angleDegY, angleDegZ);  // Draw Text Centered
+        return textLength;
+    }
+
+    private float drawCentered(String text, float x, float y, float z, float angleDegZ) {
+        return drawCentered(text, x, y, z, 0, 0, angleDegZ);
+    }
+
+    private float drawCentered(String text, float x, float y, float angleDeg) {
+        return drawCentered(text, x, y, 0, angleDeg);
+    }
+
+    private float drawCentered(String text, float x, float y) {
+        float textLength = getLength(text);                  // Get Text Length
+        float centeredX = x - (textLength / 2.0f);
+        float centeredY = y - (getScaledCharHeight() / 2.0f);
+        return drawCentered(text, centeredX, centeredY, 0);
+
+    }
+
+    private float drawCenteredOnXAxis(String text, float x, float y) {
+        float textLength = getLength(text);
+        float centeredX = x - (textLength / 2.0f);
+        draw(text, centeredX, y);
+        return textLength;
+    }
+
+    private void drawCenteredOnYAxis(String text, float x, float y) {
+        float centeredY = y - (getScaledCharHeight() / 2.0f);
+        draw(text, x, centeredY);
+    }
+
+    public static class GLTextBuilder {
+
+        private Program program;
+        private AssetManager assets;
+        private String fontFile;
+        private int size;
+        private int paddingX;
+        private int paddingY;
+
+        private GLTextBuilder() {
+            program = new BatchTextProgram();
+            program.init();
+        }
+
+        public GLText build() {
+            GLText font = new GLText(program, assets);
+            // Load the font from file (set size + padding), creates the texture
+            // NOTE: after a successful call to this the font is ready for rendering!
+            font.load(fontFile, size, paddingX, paddingY);
+            return font;
+        }
+
+        public GLTextBuilder assets(AssetManager assets) {
+            this.assets = assets;
+            return this;
+        }
+
+        public GLTextBuilder font(String fontFile) {
+            this.fontFile = fontFile;
+            return this;
+        }
+
+        public GLTextBuilder size(int size) {
+            this.size = size;
+            return this;
+        }
+
+        public GLTextBuilder padding(int paddingX, int paddingY) {
+            this.paddingX = paddingX;
+            this.paddingY = paddingY;
+            return this;
+        }
     }
 }
