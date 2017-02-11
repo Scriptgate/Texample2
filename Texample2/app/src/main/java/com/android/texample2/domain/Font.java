@@ -9,14 +9,10 @@
 
 package com.android.texample2.domain;
 
-import android.content.res.AssetManager;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.opengl.Matrix;
 
-import com.android.texample2.programs.BatchTextProgram;
 import com.android.texample2.programs.Program;
 
 import static android.opengl.GLES20.*;
@@ -25,15 +21,12 @@ import static java.lang.Math.ceil;
 
 public class Font {
 
-    private final static int CHAR_START = 32;           // First Character (ASCII Code)
-    private final static int CHAR_END = 126;            // Last Character (ASCII Code)
-    private final static int CHAR_CNT = (((CHAR_END - CHAR_START) + 1) + 1);  // Character Count (Including Character to use for Unknown)
+    public final static int CHAR_START = 32;           // First Character (ASCII Code)
+    public final static int CHAR_END = 126;            // Last Character (ASCII Code)
+    public final static int CHAR_CNT = (((CHAR_END - CHAR_START) + 1) + 1);  // Character Count (Including Character to use for Unknown)
 
-    private final static int CHAR_NONE = 32;            // Character to Use for Unknown (ASCII Code)
+    public final static int CHAR_NONE = 32;            // Character to Use for Unknown (ASCII Code)
     private final static int CHAR_UNKNOWN = (CHAR_CNT - 1);  // Index of the Unknown Character
-
-    private final static int FONT_SIZE_MIN = 6;         // Minumum Font Size (Pixels)
-    private final static int FONT_SIZE_MAX = 180;       // Maximum Font Size (Pixels)
 
     private final static int CHAR_BATCH_SIZE = 24;     // Number of Characters to Render Per Batch must be the same as the size of u_MVPMatrix in BatchTextProgram
     private static final String TAG = "GLTEXT";
@@ -63,7 +56,7 @@ public class Font {
         return new FontBuilder();
     }
 
-    private Font(Program program) {
+    Font(Program program) {
 
         batch = new SpriteBatch(CHAR_BATCH_SIZE, program);  // Create Sprite Batch (with Defined Size)
         // Initialize the color and texture handles
@@ -100,17 +93,10 @@ public class Font {
         cellWidth = (int) charWidthMax + (2 * fontPadX);
         cellHeight = (int) metrics.height + (2 * fontPadY);
 
-        int maxSize = cellWidth > cellHeight ? cellWidth : cellHeight;  // Save Max Size (Width/Height)
-        if (maxSize < FONT_SIZE_MIN || maxSize > FONT_SIZE_MAX) {  // IF Maximum Size Outside Valid Bounds
-            throw new IllegalArgumentException("Invalid cell size: [width: " + cellWidth + ", height: " + cellHeight + "], bounds: [minimum: " + FONT_SIZE_MIN + ", maximum: " + FONT_SIZE_MAX + "]");
-        }
-
-
-        int xOffset = fontPadX;
+        float xOffset = fontPadX;
         float yOffset = (cellHeight - 1) - metrics.descent - fontPadY;
-        fontTexture = new FontTexture(paint, maxSize, cellWidth, cellHeight, xOffset, yOffset);
 
-
+        fontTexture = new FontTexture(paint, cellWidth, cellHeight, xOffset, yOffset);
     }
 
     private Paint setUpPaint(Typeface typeface, int size) {
@@ -133,8 +119,9 @@ public class Font {
             characterArray[0] = c;                                    // Set Character
             paint.getTextWidths(characterArray, 0, 1, workingWidth);           // Get Character Bounds
             charWidths[cnt] = workingWidth[0];                      // Get Width
-            if (charWidths[cnt] > charWidthMax)        // IF Width Larger Than Max Width
+            if (charWidths[cnt] > charWidthMax) {        // IF Width Larger Than Max Width
                 charWidthMax = charWidths[cnt];           // Save New Max Width
+            }
             cnt++;                                       // Advance Array Counter
         }
         characterArray[0] = CHAR_NONE;                               // Set Unknown Character
@@ -167,14 +154,20 @@ public class Font {
         scaleY = sy;
     }
 
-    //--Get Scale--//
-    // D: get the current scaling used for the font
-    // A: [none]
-    // R: the x/y scale currently used for scale
+    /**
+     * get the current x scale used for the font
+     *
+     * @return the x scale currently used for scale
+     */
     public float getScaleX() {
         return scaleX;
     }
 
+    /**
+     * get the current y scale used for the font
+     *
+     * @return the y scale currently used for scale
+     */
     public float getScaleY() {
         return scaleY;
     }
@@ -408,51 +401,6 @@ public class Font {
         draw(text, x, centeredY);
     }
 
-    public static class FontBuilder {
-
-        private Program program;
-        private AssetManager assets;
-        private String fontFile;
-        private int size;
-        private int paddingX = 0;
-        private int paddingY = 0;
-
-        private FontBuilder() {
-            program = new BatchTextProgram();
-            program.init();
-        }
-
-        public Font build() {
-            Font font = new Font(program);
-            // Load the font from file (set size + padding), creates the texture
-            // NOTE: after a successful call to this the font is ready for rendering!
-            Typeface typeface = Typeface.createFromAsset(assets, fontFile);  // Create the Typeface from Font File
-            font.load(typeface, size, paddingX, paddingY);
-            return font;
-        }
-
-        public FontBuilder assets(AssetManager assets) {
-            this.assets = assets;
-            return this;
-        }
-
-        public FontBuilder font(String fontFile) {
-            this.fontFile = fontFile;
-            return this;
-        }
-
-        public FontBuilder size(int size) {
-            this.size = size;
-            return this;
-        }
-
-        public FontBuilder padding(int paddingX, int paddingY) {
-            this.paddingX = paddingX;
-            this.paddingY = paddingY;
-            return this;
-        }
-    }
-
     private static class FontMetrics {
 
         // Font Height (Actual; Pixels)
@@ -474,106 +422,6 @@ public class Font {
             float ascent = (float) ceil(abs(fm.ascent));
             float descent = (float) ceil(abs(fm.descent));
             return new FontMetrics(height, ascent, descent);
-        }
-    }
-
-    private static class FontTexture {
-        // Texture Size for Font (Square)
-        private int size;
-        // Number of Rows/Columns
-        private int rowCnt, colCnt;
-        // Full Texture Region
-        private TextureRegion region;
-        // Font Texture ID
-        private int textureId;
-        // Region of Each Character (Texture Coordinates)
-        private TextureRegion[] charRgn;
-
-        public FontTexture(Paint paint, int maxSize, int cellWidth, int cellHeight, float xOffset, float yOffset) {
-            //      get texture size based on max font size (width or height)
-            size = calculateTextureSize(maxSize);
-            // calculate rows/columns
-            // NOTE: while not required for anything, these may be useful to have :)
-            colCnt = size / cellWidth;
-            rowCnt = (int) ceil((float) CHAR_CNT / (float) colCnt);
-
-            // create full texture region
-            region = new TextureRegion(size, size, 0, 0, size, size);
-
-            textureId = buildFontMap(paint, size, cellWidth, cellHeight, xOffset, yOffset);
-
-            // setup the array of character texture regions
-            charRgn = createTextureRegions(size, cellWidth, cellHeight);
-        }
-
-        private int calculateTextureSize(int maxSize) {
-            // NOTE: these values are fixed, based on the defined characters. when
-            // changing start/end characters (CHAR_START/CHAR_END) this will need adjustment too!
-            if (maxSize <= 24) {
-                return 256;
-            } else if (maxSize <= 40) {
-                return 512;
-            } else if (maxSize <= 80) {
-                return 1024;
-            } else {
-                return 2048;
-            }
-        }
-
-        private int buildFontMap(Paint paint, int textureSize, int cellWidth, int cellHeight, float xOffset, float yOffset) {
-            Bitmap bitmap = Bitmap.createBitmap(textureSize, textureSize, Bitmap.Config.ALPHA_8);
-            bitmap.eraseColor(0x00000000);
-
-            Canvas canvas = new Canvas(bitmap);
-            float x = xOffset;
-            float y = yOffset;
-
-            char[] characterArray = new char[1];
-            for (char c = CHAR_START; c <= CHAR_END; c++) {
-                characterArray[0] = c;
-                canvas.drawText(characterArray, 0, 1, x, y, paint);
-                x += cellWidth;
-                if ((x + cellWidth - xOffset) > textureSize) {
-                    x = xOffset;
-                    y += cellHeight;
-                }
-            }
-            characterArray[0] = CHAR_NONE;
-            canvas.drawText(characterArray, 0, 1, x, y, paint);
-
-            return TextureHelper.loadTexture(bitmap);
-        }
-
-        private TextureRegion[] createTextureRegions(int textureSize, int cellWidth, int cellHeight) {
-            TextureRegion[] charRgn = new TextureRegion[CHAR_CNT];
-            float x = 0;
-            float y = 0;
-            for (int c = 0; c < CHAR_CNT; c++) {
-                charRgn[c] = new TextureRegion(textureSize, textureSize, x, y, cellWidth - 1, cellHeight - 1);
-                x += cellWidth;
-                if (x + cellWidth > textureSize) {
-                    x = 0;
-                    y += cellHeight;
-                }
-            }
-            return charRgn;
-        }
-
-        public void draw(SpriteBatch batch, int width, int height) {
-            float[] idMatrix = new float[16];
-            Matrix.setIdentityM(idMatrix, 0);
-            int x = (width - size) / 2;
-            int y = (height - size) / 2;
-            batch.drawSprite(x, y, size, size, region, idMatrix);
-        }
-
-        public TextureRegion getTextureCoordinates(int characterIndex) {
-            return charRgn[characterIndex];
-        }
-
-        public void bindTexture() {
-            // Bind the texture to this unit
-            glBindTexture(GL_TEXTURE_2D, textureId);
         }
     }
 }
