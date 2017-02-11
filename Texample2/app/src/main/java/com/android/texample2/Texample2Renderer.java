@@ -7,15 +7,15 @@ import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 
-import com.android.texample2.domain.GLText;
+import com.android.texample2.domain.Font;
 
 import static android.opengl.GLES20.*;
-import static com.android.texample2.domain.GLText.createGLText;
+import static com.android.texample2.domain.Font.createGLText;
 
 public class Texample2Renderer implements GLSurfaceView.Renderer {
 
     private static final String TAG = "TexampleRenderer";
-    private GLText glText;
+    private Font font;
     private Context activityContext;
 
     private int width = 100;                           // Updated to the Current Width + Height in onSurfaceChanged()
@@ -33,9 +33,9 @@ public class Texample2Renderer implements GLSurfaceView.Renderer {
         // Set the background frame color
         glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 
-        // Create the GLText
+        // Create the Font
 
-        glText = createGLText()
+        font = createGLText()
                 .assets(activityContext.getAssets())
                 .font("Roboto-Regular.ttf")
                 .size(30)
@@ -56,20 +56,20 @@ public class Texample2Renderer implements GLSurfaceView.Renderer {
         Matrix.multiplyMM(mVPMatrix, 0, mProjMatrix, 0, mVMatrix, 0);
 
         // TEST: render the entire font texture
-        glText.drawTexture(width, height, mVPMatrix);            // Draw the Entire Texture
+        font.drawTexture(width, height, mVPMatrix);            // Draw the Entire Texture
 
         // TEST: render some strings with the font
-        glText.begin(1.0f, 1.0f, 1.0f, 1.0f, mVPMatrix);         // Begin Text Rendering (Set Color WHITE)
-        glText.drawCentered("Test String 3D!", 0f, 0f, 0f, 0, -30, 0);
-//		glText.drawCentered( "Test String :)", 0, 0, 0 );
-        glText.draw("Diagonal 1", 40, 40, 40);
-        glText.draw("Column 1", 100, 100, 90);
-        glText.end();
+        font.begin(1.0f, 1.0f, 1.0f, 1.0f, mVPMatrix);         // Begin Text Rendering (Set Color WHITE)
+        font.drawCentered("Test String 3D!", 0f, 0f, 0f, 0, -30, 0);
+//		font.drawCentered( "Test String :)", 0, 0, 0 );
+        font.draw("Diagonal 1", 40, 40, 40);
+        font.draw("Column 1", 100, 100, 90);
+        font.end();
 
-        glText.begin(0.0f, 0.0f, 1.0f, 1.0f, mVPMatrix);         // Begin Text Rendering (Set Color BLUE)
-        glText.draw("More Lines...", 50, 200);
-        glText.draw("The End.", 50, 200 + glText.getScaledCharHeight(), 180);
-        glText.end();
+        font.begin(0.0f, 0.0f, 1.0f, 1.0f, mVPMatrix);         // Begin Text Rendering (Set Color BLUE)
+        font.draw("More Lines...", 50, 200);
+        font.draw("The End.", 50, 200 + font.getScaledCharHeight(), 180);
+        font.end();
     }
 
     public void onSurfaceChanged(GL10 unused, int width, int height) {

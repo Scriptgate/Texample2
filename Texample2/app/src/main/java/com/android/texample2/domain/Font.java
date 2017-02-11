@@ -23,7 +23,7 @@ import static android.opengl.GLES20.*;
 import static java.lang.Math.abs;
 import static java.lang.Math.ceil;
 
-public class GLText {
+public class Font {
 
     private final static int CHAR_START = 32;           // First Character (ASCII Code)
     private final static int CHAR_END = 126;            // Last Character (ASCII Code)
@@ -59,11 +59,11 @@ public class GLText {
     private int mColorHandle;                           // Shader color handle
     private int mTextureUniformHandle;                 // Shader texture handle
 
-    public static GLTextBuilder createGLText() {
-        return new GLTextBuilder();
+    public static FontBuilder createGLText() {
+        return new FontBuilder();
     }
 
-    private GLText(Program program) {
+    private Font(Program program) {
 
         batch = new SpriteBatch(CHAR_BATCH_SIZE, program);  // Create Sprite Batch (with Defined Size)
         // Initialize the color and texture handles
@@ -408,7 +408,7 @@ public class GLText {
         draw(text, x, centeredY);
     }
 
-    public static class GLTextBuilder {
+    public static class FontBuilder {
 
         private Program program;
         private AssetManager assets;
@@ -417,13 +417,13 @@ public class GLText {
         private int paddingX = 0;
         private int paddingY = 0;
 
-        private GLTextBuilder() {
+        private FontBuilder() {
             program = new BatchTextProgram();
             program.init();
         }
 
-        public GLText build() {
-            GLText font = new GLText(program);
+        public Font build() {
+            Font font = new Font(program);
             // Load the font from file (set size + padding), creates the texture
             // NOTE: after a successful call to this the font is ready for rendering!
             Typeface typeface = Typeface.createFromAsset(assets, fontFile);  // Create the Typeface from Font File
@@ -431,22 +431,22 @@ public class GLText {
             return font;
         }
 
-        public GLTextBuilder assets(AssetManager assets) {
+        public FontBuilder assets(AssetManager assets) {
             this.assets = assets;
             return this;
         }
 
-        public GLTextBuilder font(String fontFile) {
+        public FontBuilder font(String fontFile) {
             this.fontFile = fontFile;
             return this;
         }
 
-        public GLTextBuilder size(int size) {
+        public FontBuilder size(int size) {
             this.size = size;
             return this;
         }
 
-        public GLTextBuilder padding(int paddingX, int paddingY) {
+        public FontBuilder padding(int paddingX, int paddingY) {
             this.paddingX = paddingX;
             this.paddingY = paddingY;
             return this;
