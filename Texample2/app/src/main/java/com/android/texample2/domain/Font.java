@@ -18,12 +18,15 @@ import com.android.texample2.programs.Program;
 import static android.opengl.GLES20.*;
 import static java.lang.Math.abs;
 import static java.lang.Math.ceil;
+import static java8.util.stream.IntStreams.concat;
+import static java8.util.stream.IntStreams.of;
+import static java8.util.stream.IntStreams.rangeClosed;
 
 public class Font {
 
     public final static int CHAR_START = 32;           // First Character (ASCII Code)
     public final static int CHAR_END = 126;            // Last Character (ASCII Code)
-    public final static int CHAR_CNT = (((CHAR_END - CHAR_START) + 1) + 1);  // Character Count (Including Character to use for Unknown)
+    public final static int CHAR_CNT = CHAR_END - CHAR_START + 2;  // Character Count (Including Character to use for Unknown)
 
     public final static int CHAR_NONE = 32;            // Character to Use for Unknown (ASCII Code)
     private final static int CHAR_UNKNOWN = (CHAR_CNT - 1);  // Index of the Unknown Character
@@ -48,9 +51,9 @@ public class Font {
     private float scaleY = 1.0f;                              // Font Scale (Y Axis, Default Scale = 1 (Unscaled))
     private float spaceX = 0.0f;                              // Additional (X,Y Axis) Spacing (Unscaled)
 
-    private Program mProgram;                           // OpenGL Program object
-    private int mColorHandle;                           // Shader color handle
-    private int mTextureUniformHandle;                 // Shader texture handle
+    private Program program;                           // OpenGL Program object
+    private int colorHandle;                           // Shader color handle
+    private int textureUniformHandle;                 // Shader texture handle
 
     public static FontBuilder createGLText() {
         return new FontBuilder();
@@ -60,9 +63,9 @@ public class Font {
 
         batch = new SpriteBatch(CHAR_BATCH_SIZE, program);  // Create Sprite Batch (with Defined Size)
         // Initialize the color and texture handles
-        mProgram = program;
-        mColorHandle = glGetUniformLocation(mProgram.getHandle(), "u_Color");
-        mTextureUniformHandle = glGetUniformLocation(mProgram.getHandle(), "u_Texture");
+        this.program = program;
+        colorHandle = glGetUniformLocation(this.program.getHandle(), "u_Color");
+        textureUniformHandle = glGetUniformLocation(this.program.getHandle(), "u_Texture");
     }
 
     /**
@@ -73,7 +76,6 @@ public class Font {
      * @param size     Requested pixel size of font (height)
      * @param padX     Extra padding per character on X-Axis to prevent overlapping characters.
      * @param padY     Extra padding per character on Y-Axis to prevent overlapping characters.
-     * @return true if successful, false otherwise
      */
     public void load(Typeface typeface, int size, int padX, int padY) {
         fontPadX = padX;
@@ -111,24 +113,22 @@ public class Font {
     private float calculateCharWidths(Paint paint, float[] charWidths) {
         float charWidthMax = 0.0f;
 
-        char[] characterArray = new char[1];                         // Create Character Array
-        float[] workingWidth = new float[1];                       // Working Width Value
+        char[] characterHolder = new char[1];
+        float[] widthHolder = new float[1];
 
-        int cnt = 0;                                    // Array Counter
-        for (char c = CHAR_START; c <= CHAR_END; c++) {  // FOR Each Character
-            characterArray[0] = c;                                    // Set Character
-            paint.getTextWidths(characterArray, 0, 1, workingWidth);           // Get Character Bounds
-            charWidths[cnt] = workingWidth[0];                      // Get Width
-            if (charWidths[cnt] > charWidthMax) {        // IF Width Larger Than Max Width
-                charWidthMax = charWidths[cnt];           // Save New Max Width
+        int[] allCharacters = concat(rangeClosed(CHAR_START, CHAR_END), of(CHAR_NONE)).toArray();
+
+        int cnt = 0;
+        for (int character : allCharacters) {
+            characterHolder[0] = (char) character;
+
+            paint.getTextWidths(characterHolder, 0, 1, widthHolder);
+            charWidths[cnt] = widthHolder[0];
+
+            if (charWidths[cnt] > charWidthMax) {
+                charWidthMax = charWidths[cnt];
             }
-            cnt++;                                       // Advance Array Counter
-        }
-        characterArray[0] = CHAR_NONE;                               // Set Unknown Character
-        paint.getTextWidths(characterArray, 0, 1, workingWidth);              // Get Character Bounds
-        charWidths[cnt] = workingWidth[0];                         // Get Width
-        if (charWidths[cnt] > charWidthMax) {           // IF Width Larger Than Max Width
-            charWidthMax = charWidths[cnt];              // Save New Max Width
+            cnt++;
         }
         return charWidthMax;
     }
@@ -198,27 +198,25 @@ public class Font {
      */
     public float getLength(String text) {
         float result = 0.0f;
-        int numberOfCharacters = text.length();
-        for (int i = 0; i < numberOfCharacters; i++) {           // For Each Character in String (Except Last
-            int characterIndex = (int) text.charAt(i) - CHAR_START;  // Calculate Character Index (Offset by First Char in Font)
-            result += (charWidths[characterIndex] * scaleX);           // Add Scaled Character Width to Total Length
+        for (int i = 0; i < text.length(); i++) {
+            result += getScaledCharacterWidth(text.charAt(i));
         }
-        result += (numberOfCharacters > 1 ? ((numberOfCharacters - 1) * spaceX) * scaleX : 0);  // Add Space Length
-        return result;                                     // Return Total Length
+        result += (text.length() - 1) * spaceX * scaleX;
+        return result;
     }
 
-    //--Get Width/Height of Character--//
-    // D: return the scaled width/height of a character, or max character width
-    //    NOTE: since all characters are the same height, no character index is required!
-    //    NOTE: excludes spacing!!
-    // A: chr - the character to get width for
-    // R: the requested character size (scaled)
-    public float getCharWidth(char chr) {
-        int characterIndex = chr - CHAR_START;                       // Calculate Character Index (Offset by First Char in Font)
-        return charWidths[characterIndex] * scaleX;              // Return Scaled Character Width
+    /**
+     * return the scaled width of a character, or max character width
+     * NOTE: excludes spacing!!
+     *
+     * @param chr the character to get width for
+     * @return the requested character width (scaled)
+     */
+    public float getScaledCharacterWidth(char chr) {
+        return getCharacterWidth(chr) * scaleX;
     }
 
-    public float getScaledMaxCharWidth() {
+    public float getScaledMaxCharacterWidth() {
         return charWidthMax * scaleX;
     }
 
@@ -226,10 +224,6 @@ public class Font {
         return metrics.height * scaleY;
     }
 
-    //--Get Font Metrics--//
-    // D: return the specified (scaled) font metric
-    // A: [none]
-    // R: the requested font metric (scaled)
     public float getAscent() {
         return metrics.ascent * scaleY;
     }
@@ -260,24 +254,24 @@ public class Font {
     }
 
     private void initDraw(float red, float green, float blue, float alpha) {
-        glUseProgram(mProgram.getHandle()); // specify the program to use
+        glUseProgram(program.getHandle()); // specify the program to use
 
         // set color TODO: only alpha component works, text is always black #BUG
         float[] color = {red, green, blue, alpha};
-        glUniform4fv(mColorHandle, 1, color, 0);
-        glEnableVertexAttribArray(mColorHandle);
+        glUniform4fv(colorHandle, 1, color, 0);
+        glEnableVertexAttribArray(colorHandle);
 
         glActiveTexture(GL_TEXTURE0);  // Set the active texture unit to texture unit 0
 
         fontTexture.bindTexture();
 
         // Tell the texture uniform sampler to use this texture in the shader by binding to texture unit 0
-        glUniform1i(mTextureUniformHandle, 0);
+        glUniform1i(textureUniformHandle, 0);
     }
 
     public void end() {
         batch.endBatch();
-        glDisableVertexAttribArray(mColorHandle);
+        glDisableVertexAttribArray(colorHandle);
     }
 
     /**
@@ -309,11 +303,8 @@ public class Font {
      * @param angleDegZ the z-position of the angle to rotate the text
      */
     private void draw(String text, float x, float y, float z, float angleDegX, float angleDegY, float angleDegZ) {
-        float scaledCharacterHeight = cellHeight * scaleY;
-        float scaledCharacterWidth = cellWidth * scaleX;
-        int numberOfCharacters = text.length();
-        x += (scaledCharacterWidth / 2.0f) - (fontPadX * scaleX);
-        y += (scaledCharacterHeight / 2.0f) - (fontPadY * scaleY);
+        x += ((cellWidth / 2.0f) - fontPadX) * scaleX;
+        y += ((cellHeight / 2.0f) - fontPadY) * scaleY;
 
         // create a model matrix based on x, y and angleDeg
         float[] modelMatrix = new float[16];
@@ -323,14 +314,19 @@ public class Font {
         Matrix.rotateM(modelMatrix, 0, angleDegX, 1, 0, 0);
         Matrix.rotateM(modelMatrix, 0, angleDegY, 0, 1, 0);
 
-        float letterX = 0;
+        float xOffset = 0;
 
-        for (int i = 0; i < numberOfCharacters; i++) {              // FOR Each Character in String
+        for (int i = 0; i < text.length(); i++) {              // FOR Each Character in String
             int characterIndex = getCharacterIndex(text.charAt(i));
             //TODO: optimize - applying the same model matrix to all the characters in the string
-            batch.drawSprite(letterX, 0.0f, scaledCharacterWidth, scaledCharacterHeight, fontTexture.getTextureCoordinates(characterIndex), modelMatrix);  // Draw the Character
-            letterX += (charWidths[characterIndex] + spaceX) * scaleX;    // Advance X Position by Scaled Character Width
+            batch.drawSprite(xOffset, 0.0f, cellWidth * scaleX, cellHeight * scaleY, fontTexture.getTextureCoordinates(characterIndex), modelMatrix);
+            xOffset += (charWidths[characterIndex] + spaceX) * scaleX;
         }
+    }
+
+    private float getCharacterWidth(char character) {
+        int characterIndex = getCharacterIndex(character);
+        return charWidths[characterIndex];
     }
 
     private int getCharacterIndex(char character) {

@@ -48,21 +48,20 @@ class FontTexture {
     }
 
     private int calculateTextureSize(int cellWidth, int cellHeight) {
-        int maxSize = cellWidth > cellHeight ? cellWidth : cellHeight;  // Save Max Size (Width/Height)
-        if (maxSize < FONT_SIZE_MIN || maxSize > FONT_SIZE_MAX) {  // IF Maximum Size Outside Valid Bounds
+        int maxCellSize = cellWidth > cellHeight ? cellWidth : cellHeight;
+        if (maxCellSize < FONT_SIZE_MIN || maxCellSize > FONT_SIZE_MAX) {
             throw new IllegalArgumentException("Invalid cell size: [width: " + cellWidth + ", height: " + cellHeight + "], bounds: [minimum: " + FONT_SIZE_MIN + ", maximum: " + FONT_SIZE_MAX + "]");
         }
-        return calculateTextureSize(maxSize);
+        return calculateTextureSize(maxCellSize);
     }
 
-    private int calculateTextureSize(int maxSize) {
-        // NOTE: these values are fixed, based on the defined characters. when
-        // changing start/end characters (CHAR_START/CHAR_END) this will need adjustment too!
-        if (maxSize <= 24) {
+    private int calculateTextureSize(int maxCellSize) {
+        // NOTE: these values are fixed, based on the defined characters. when changing start/end characters (CHAR_START/CHAR_END) this will need adjustment too!
+        if (maxCellSize <= 24) {
             return 256;
-        } else if (maxSize <= 40) {
+        } else if (maxCellSize <= 40) {
             return 512;
-        } else if (maxSize <= 80) {
+        } else if (maxCellSize <= 80) {
             return 1024;
         } else {
             return 2048;
@@ -77,18 +76,18 @@ class FontTexture {
         float x = xOffset;
         float y = yOffset;
 
-        char[] characterArray = new char[1];
+        char[] characterHolder = new char[1];
         for (char c = CHAR_START; c <= CHAR_END; c++) {
-            characterArray[0] = c;
-            canvas.drawText(characterArray, 0, 1, x, y, paint);
+            characterHolder[0] = c;
+            canvas.drawText(characterHolder, 0, 1, x, y, paint);
             x += cellWidth;
             if ((x + cellWidth - xOffset) > textureSize) {
                 x = xOffset;
                 y += cellHeight;
             }
         }
-        characterArray[0] = CHAR_NONE;
-        canvas.drawText(characterArray, 0, 1, x, y, paint);
+        characterHolder[0] = CHAR_NONE;
+        canvas.drawText(characterHolder, 0, 1, x, y, paint);
 
         return TextureHelper.loadTexture(bitmap);
     }

@@ -17,3 +17,7 @@ android {
         }
     }
 }
+
+dependencies {
+    compile group: 'net.sourceforge.streamsupport', name: 'streamsupport', version: '1.5.3'
+}
