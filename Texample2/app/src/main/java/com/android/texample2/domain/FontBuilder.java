@@ -3,21 +3,17 @@ package com.android.texample2.domain;
 import android.content.res.AssetManager;
 import android.graphics.Typeface;
 
-import com.android.texample2.programs.BatchTextProgram;
-import com.android.texample2.programs.Program;
-
 public class FontBuilder {
 
-    private Program program;
+    private FontProgram program;
     private AssetManager assets;
     private String fontFile;
     private int size;
     private int paddingX = 0;
     private int paddingY = 0;
 
-    FontBuilder() {
-        program = new BatchTextProgram();
-        program.init();
+    public static FontBuilder createFont() {
+        return new FontBuilder();
     }
 
     public Font build() {
@@ -27,6 +23,11 @@ public class FontBuilder {
         Typeface typeface = Typeface.createFromAsset(assets, fontFile);  // Create the Typeface from Font File
         font.load(typeface, size, paddingX, paddingY);
         return font;
+    }
+
+    public FontBuilder program(FontProgram program) {
+        this.program = program;
+        return this;
     }
 
     public FontBuilder assets(AssetManager assets) {

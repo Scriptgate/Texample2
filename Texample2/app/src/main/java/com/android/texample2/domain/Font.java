@@ -13,8 +13,6 @@ import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.opengl.Matrix;
 
-import com.android.texample2.programs.Program;
-
 import static android.opengl.GLES20.*;
 import static java.lang.Math.abs;
 import static java.lang.Math.ceil;
@@ -50,21 +48,11 @@ public class Font {
     private float scaleY = 1.0f;                              // Font Scale (Y Axis, Default Scale = 1 (Unscaled))
     private float spaceX = 0.0f;                              // Additional (X,Y Axis) Spacing (Unscaled)
 
-    private Program program;                           // OpenGL Program object
-    private int colorHandle;                           // Shader color handle
-    private int textureUniformHandle;                 // Shader texture handle
+    private FontProgram program;
 
-    public static FontBuilder createGLText() {
-        return new FontBuilder();
-    }
-
-    Font(Program program) {
-
-        batch = new SpriteBatch(CHAR_BATCH_SIZE, program);  // Create Sprite Batch (with Defined Size)
-        // Initialize the color and texture handles
+    Font(FontProgram program) {
         this.program = program;
-        colorHandle = glGetUniformLocation(this.program.getHandle(), "u_Color");
-        textureUniformHandle = glGetUniformLocation(this.program.getHandle(), "u_Texture");
+        batch = new SpriteBatch(CHAR_BATCH_SIZE, program.getMvpMatricesHandle());  // Create Sprite Batch (with Defined Size)
     }
 
     /**
@@ -185,24 +173,24 @@ public class Font {
     }
 
     private void initDraw(float red, float green, float blue, float alpha) {
-        glUseProgram(program.getHandle()); // specify the program to use
+        glUseProgram(program.getProgramHandle()); // specify the program to use
 
         // set color TODO: only alpha component works, text is always black #BUG
         float[] color = {red, green, blue, alpha};
-        glUniform4fv(colorHandle, 1, color, 0);
-        glEnableVertexAttribArray(colorHandle);
+        glUniform4fv(program.getColorHandle(), 1, color, 0);
+        glEnableVertexAttribArray(program.getColorHandle());
 
         glActiveTexture(GL_TEXTURE0);  // Set the active texture unit to texture unit 0
 
         fontTexture.bindTexture();
 
         // Tell the texture uniform sampler to use this texture in the shader by binding to texture unit 0
-        glUniform1i(textureUniformHandle, 0);
+        glUniform1i(program.getTextureUniformHandle(), 0);
     }
 
     public void end() {
         batch.endBatch();
-        glDisableVertexAttribArray(colorHandle);
+        glDisableVertexAttribArray(program.getColorHandle());
     }
 
     /**

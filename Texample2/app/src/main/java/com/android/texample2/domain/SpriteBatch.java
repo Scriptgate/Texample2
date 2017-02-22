@@ -1,7 +1,5 @@
 package com.android.texample2.domain;
 
-import com.android.texample2.programs.Program;
-
 import android.opengl.Matrix;
 
 import java.util.List;
@@ -31,9 +29,9 @@ class SpriteBatch {
      * Prepare the sprite batcher for specified maximum number of sprites
      *
      * @param maxSprites the maximum allowed sprites per batch
-     * @param program    program to use when drawing
+     * @param mvpMatricesHandle
      */
-    public SpriteBatch(int maxSprites, Program program) {
+    public SpriteBatch(int maxSprites, int mvpMatricesHandle) {
         uMVPMatrices  = new float[maxSprites * 16];
         this.vertexBuffer = new float[maxSprites * VERTICES_PER_SPRITE * VERTEX_SIZE];  // Create Vertex Buffer
         this.bufferIndex = 0;                           // Reset Buffer Index
@@ -41,21 +39,21 @@ class SpriteBatch {
         this.numSprites = 0;                            // Clear Sprite Counter
 
         initializeVertices(maxSprites);
-        mMVPMatricesHandle = glGetUniformLocation(program.getHandle(), "u_MVPMatrix");
+        mMVPMatricesHandle = mvpMatricesHandle;
     }
 
     private void initializeVertices(int maxSprites) {
         this.vertices = new Vertices(maxSprites * VERTICES_PER_SPRITE, maxSprites * INDICES_PER_SPRITE);  // Create Rendering Vertices
         short[] indices = new short[maxSprites * INDICES_PER_SPRITE];  // Create Temp Index Buffer
         int len = indices.length;                       // Get Index Buffer Length
-        short j = 0;                                    // Counter
+        short j = 0;
         for (int i = 0; i < len; i += INDICES_PER_SPRITE, j += VERTICES_PER_SPRITE) {  // FOR Each Index Set (Per Sprite)
-            indices[i] = j;           // Calculate Index 0
-            indices[i + 1] = (short) (j + 1);           // Calculate Index 1
-            indices[i + 2] = (short) (j + 2);           // Calculate Index 2
-            indices[i + 3] = (short) (j + 2);           // Calculate Index 3
-            indices[i + 4] = (short) (j + 3);           // Calculate Index 4
-            indices[i + 5] = j;           // Calculate Index 5
+            indices[i] = j;
+            indices[i + 1] = (short) (j + 1);
+            indices[i + 2] = (short) (j + 2);
+            indices[i + 3] = (short) (j + 2);
+            indices[i + 4] = (short) (j + 3);
+            indices[i + 5] = j;
         }
         vertices.setIndices(indices, 0, len);         // Set Index Buffer for Rendering
     }

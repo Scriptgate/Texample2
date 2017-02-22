@@ -4,6 +4,7 @@ import android.opengl.GLES20;
 import android.util.Log;
 
 import com.android.texample2.AttributeVariable;
+import com.android.texample2.domain.FontProgram;
 
 import static android.opengl.GLES20.*;
 
@@ -36,6 +37,14 @@ public abstract class Program {
 
     public int getHandle() {
         return programHandle;
+    }
+
+    public FontProgram createFontProgram() {
+        int colorHandle = glGetUniformLocation(programHandle, "u_Color");
+        int textureUniformHandle = glGetUniformLocation(programHandle, "u_Texture");
+        int mvpMatricesHandle = glGetUniformLocation(programHandle, "u_MVPMatrix");
+
+        return new FontProgram(programHandle, colorHandle, textureUniformHandle, mvpMatricesHandle);
     }
 
     public void delete() {

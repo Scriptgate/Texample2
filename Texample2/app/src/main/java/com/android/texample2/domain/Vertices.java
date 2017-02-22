@@ -8,6 +8,7 @@ import static com.android.texample2.AttributeVariable.*;
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.ByteOrder.nativeOrder;
 
+//TODO: remove dependency on AttributeVariable
 class Vertices {
 
     //--Constants--//
@@ -100,17 +101,14 @@ class Vertices {
      * USAGE: call once before calling draw() multiple times for this buffer.
      */
     public void bind() {
-        // bind vertex position pointer
         vertices.position(0);                         // Set Vertex Buffer to Position
         glVertexAttribPointer(mPositionHandle, positionCnt, GL_FLOAT, false, vertexSize, vertices);
         glEnableVertexAttribArray(mPositionHandle);
 
-        // bind texture position pointer
         vertices.position(positionCnt);  // Set Vertex Buffer to Texture Coords (NOTE: position based on whether color is also specified)
         glVertexAttribPointer(mTextureCoordinateHandle, TEXCOORD_CNT, GL_FLOAT, false, vertexSize, vertices);
         glEnableVertexAttribArray(mTextureCoordinateHandle);
 
-        // bind MVP Matrix index position handle
         vertices.position(positionCnt + TEXCOORD_CNT);
         glVertexAttribPointer(mMVPIndexHandle, MVP_MATRIX_INDEX_CNT, GL_FLOAT, false, vertexSize, vertices);
         glEnableVertexAttribArray(mMVPIndexHandle);
