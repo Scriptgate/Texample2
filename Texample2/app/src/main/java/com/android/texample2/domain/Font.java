@@ -43,8 +43,7 @@ public class Font {
 
     private FontTexture fontTexture;
 
-    private float charWidthMax;                                // Character Width (Maximum; Pixels)
-    private float[] charWidths;                          // Width of Each Character (Actual; Pixels)
+    private FontCharacters characters;
     private int cellWidth, cellHeight;                         // Character Cell Width/Height
 
     private float scaleX = 1.0f;                              // Font Scale (X Axis, Default Scale = 1 (Unscaled))
@@ -81,22 +80,15 @@ public class Font {
         fontPadX = padX;
         fontPadY = padY;
 
-        // load the font and setup paint instance for drawing
         Paint paint = setUpPaint(typeface, size);
-
-        // get font metrics
         metrics = FontMetrics.loadFromPaint(paint);
+        characters = FontCharacters.createFontCharacters(paint);
 
-        //determine the width of each character (including unknown character) also determine the maximum character width
-        charWidths = new float[CHAR_CNT];
-        charWidthMax = calculateCharWidths(paint, charWidths);
-
-        // find the maximum size, validate, and setup cell sizes
-        cellWidth = (int) charWidthMax + (2 * fontPadX);
-        cellHeight = (int) metrics.height + (2 * fontPadY);
+        cellWidth = (int) characters.charWidthMax + (2 * fontPadX);
+        cellHeight = (int) metrics.actualHeightInPixels + (2 * fontPadY);
 
         float xOffset = fontPadX;
-        float yOffset = (cellHeight - 1) - metrics.descent - fontPadY;
+        float yOffset = (cellHeight - 1) - metrics.descentInPixels - fontPadY;
 
         fontTexture = new FontTexture(paint, cellWidth, cellHeight, xOffset, yOffset);
     }
@@ -110,130 +102,66 @@ public class Font {
         return paint;
     }
 
-    private float calculateCharWidths(Paint paint, float[] charWidths) {
-        float charWidthMax = 0.0f;
+    private static class FontCharacters {
 
-        char[] characterHolder = new char[1];
-        float[] widthHolder = new float[1];
+        private final float[] charWidths;
+        private final float charWidthMax;
 
-        int[] allCharacters = concat(rangeClosed(CHAR_START, CHAR_END), of(CHAR_NONE)).toArray();
-
-        int cnt = 0;
-        for (int character : allCharacters) {
-            characterHolder[0] = (char) character;
-
-            paint.getTextWidths(characterHolder, 0, 1, widthHolder);
-            charWidths[cnt] = widthHolder[0];
-
-            if (charWidths[cnt] > charWidthMax) {
-                charWidthMax = charWidths[cnt];
-            }
-            cnt++;
+        public FontCharacters(float[] charWidths, float charWidthMax) {
+            this.charWidths = charWidths;
+            this.charWidthMax = charWidthMax;
         }
-        return charWidthMax;
+
+        static FontCharacters createFontCharacters(Paint paint) {
+            float[] charWidths = new float[CHAR_CNT];
+            float charWidthMax = 0.0f;
+
+            char[] characterHolder = new char[1];
+            float[] widthHolder = new float[1];
+
+            int[] allCharacters = concat(rangeClosed(CHAR_START, CHAR_END), of(CHAR_NONE)).toArray();
+
+            int cnt = 0;
+            for (int character : allCharacters) {
+                characterHolder[0] = (char) character;
+
+                paint.getTextWidths(characterHolder, 0, 1, widthHolder);
+                charWidths[cnt] = widthHolder[0];
+
+                if (charWidths[cnt] > charWidthMax) {
+                    charWidthMax = charWidths[cnt];
+                }
+                cnt++;
+            }
+            return new FontCharacters(charWidths, charWidthMax);
+        }
+
+        private int getCharacterIndex(char character) {
+            int index = (int) character - CHAR_START;
+            if (index < 0 || index >= CHAR_CNT) {
+                index = CHAR_UNKNOWN;
+            }
+            return index;
+        }
+
+        private float getCharacterWidth(char character) {
+            int characterIndex = getCharacterIndex(character);
+            return charWidths[characterIndex];
+        }
+
     }
 
-
-    /**
-     * set the scaling to use for the font
-     *
-     * @param scale uniform scale for both x and y axis scaling
-     */
-    public void setScale(float scale) {
-        scaleX = scaleY = scale;
-    }
-
-    /**
-     * set the scaling to use for the font
-     *
-     * @param sx x axis scale
-     * @param sy y axis scale
-     */
-    public void setScale(float sx, float sy) {
-        scaleX = sx;
-        scaleY = sy;
-    }
-
-    /**
-     * get the current x scale used for the font
-     *
-     * @return the x scale currently used for scale
-     */
-    public float getScaleX() {
-        return scaleX;
-    }
-
-    /**
-     * get the current y scale used for the font
-     *
-     * @return the y scale currently used for scale
-     */
-    public float getScaleY() {
-        return scaleY;
-    }
-
-    /**
-     * set the spacing (unscaled; ie. pixel size) to use for the font
-     *
-     * @param space for x axis spacing
-     */
-    public void setSpace(float space) {
-        spaceX = space;
-    }
-
-    /**
-     * get the current spacing used for the font
-     *
-     * @return the x space currently used for scale
-     */
-    public float getSpace() {
-        return spaceX;
-    }
-
-    /**
-     * return the length of the specified string if rendered using current settings
-     *
-     * @param text the string to get length for
-     * @return the length of the specified string (pixels)
-     */
     public float getLength(String text) {
         float result = 0.0f;
         for (int i = 0; i < text.length(); i++) {
-            result += getScaledCharacterWidth(text.charAt(i));
+            result += characters.getCharacterWidth(text.charAt(i));
         }
-        result += (text.length() - 1) * spaceX * scaleX;
-        return result;
-    }
-
-    /**
-     * return the scaled width of a character, or max character width
-     * NOTE: excludes spacing!!
-     *
-     * @param chr the character to get width for
-     * @return the requested character width (scaled)
-     */
-    public float getScaledCharacterWidth(char chr) {
-        return getCharacterWidth(chr) * scaleX;
-    }
-
-    public float getScaledMaxCharacterWidth() {
-        return charWidthMax * scaleX;
+        result += (text.length() - 1) * spaceX;
+        return result * scaleX;
     }
 
     public float getScaledCharHeight() {
-        return metrics.height * scaleY;
-    }
-
-    public float getAscent() {
-        return metrics.ascent * scaleY;
-    }
-
-    public float getDescent() {
-        return metrics.descent * scaleY;
-    }
-
-    public float getActualHeight() {
-        return (metrics.height * scaleY);
+        return metrics.actualHeightInPixels * scaleY;
     }
 
     //--Begin/End Text Drawing--//
@@ -317,99 +245,91 @@ public class Font {
         float xOffset = 0;
 
         for (int i = 0; i < text.length(); i++) {              // FOR Each Character in String
-            int characterIndex = getCharacterIndex(text.charAt(i));
             //TODO: optimize - applying the same model matrix to all the characters in the string
-            batch.drawSprite(xOffset, 0.0f, cellWidth * scaleX, cellHeight * scaleY, fontTexture.getTextureCoordinates(characterIndex), modelMatrix);
-            xOffset += (charWidths[characterIndex] + spaceX) * scaleX;
+            batch.drawSprite(xOffset, 0.0f, cellWidth * scaleX, cellHeight * scaleY, fontTexture.getTextureCoordinates(characters.getCharacterIndex(text.charAt(i))), modelMatrix);
+            xOffset += (characters.getCharacterWidth(text.charAt(i)) + spaceX) * scaleX;
         }
     }
 
-    private float getCharacterWidth(char character) {
-        int characterIndex = getCharacterIndex(character);
-        return charWidths[characterIndex];
+    public TextBuilder startDrawing(String text) {
+        return new TextBuilder(this, text);
     }
 
-    private int getCharacterIndex(char character) {
-        int index = (int) character - CHAR_START;
-        if (index < 0 || index >= CHAR_CNT) {
-            index = CHAR_UNKNOWN;
+    public static class TextBuilder {
+
+        private final float length;
+        private Font font;
+        private String text;
+        private float x = 0.0f;
+        private float y = 0.0f;
+        private float z;
+        private float angleDegX = 0.0f;
+        private float angleDegY = 0.0f;
+        private float angleDegZ = 0.0f;
+
+        public TextBuilder(Font font, String text) {
+            this.font = font;
+            this.text = text;
+            this.length = font.getLength(text);
         }
-        return index;
-    }
 
-    private void draw(String text, float x, float y, float z, float angleDegZ) {
-        draw(text, x, y, z, 0, 0, angleDegZ);
-    }
+        public TextBuilder at(float x, float y) {
+            this.x = x;
+            this.y = y;
+            return this;
+        }
 
-    public void draw(String text, float x, float y, float angleDeg) {
-        draw(text, x, y, 0, angleDeg);
+        public TextBuilder rotateZ(float angleDegZ) {
+            this.angleDegZ = angleDegZ;
+            return this;
+        }
+
+        public float draw() {
+            font.draw(text, x, y, z, angleDegX, angleDegY, angleDegZ);
+            return length;
+        }
+
+        public TextBuilder rotate(float angleDegX, float angleDegY, float angleDegZ) {
+            this.angleDegX = angleDegX;
+            this.angleDegY = angleDegY;
+            this.angleDegZ = angleDegZ;
+            return this;
+        }
+
+        public TextBuilder at(float x, float y, float z) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            return this;
+        }
+
+        public TextBuilder centerXY() {
+            x -= (length / 2.0f);
+            y -= (font.getScaledCharHeight() / 2.0f);
+            return this;
+        }
+
+        public TextBuilder rotateY(float angleDegY) {
+            this.angleDegY = angleDegY;
+            return this;
+        }
     }
 
     public void draw(String text, float x, float y) {
-        draw(text, x, y, 0, 0);
-    }
 
-    /**
-     * draw text CENTERED at the specified x,y position
-     *
-     * @param text      the string to draw
-     * @param x         the x position to draw text at (bottom left of text)
-     * @param y         the y position to draw text at (bottom left of text)
-     * @param z         the z position to draw text at (bottom left of text)
-     * @param angleDegX the x position of the angle to rotate the text
-     * @param angleDegY the y position of the angle to rotate the text
-     * @param angleDegZ the z position of the angle to rotate the text
-     * @return the total width of the text that was drawn
-     */
-    public float drawCentered(String text, float x, float y, float z, float angleDegX, float angleDegY, float angleDegZ) {
-        float textLength = getLength(text);
-        float centeredX = x - (textLength / 2.0f);
-        float centeredY = y - (getScaledCharHeight() / 2.0f);
-        draw(text, centeredX, centeredY, z, angleDegX, angleDegY, angleDegZ);  // Draw Text Centered
-        return textLength;
-    }
-
-    private float drawCentered(String text, float x, float y, float z, float angleDegZ) {
-        return drawCentered(text, x, y, z, 0, 0, angleDegZ);
-    }
-
-    private float drawCentered(String text, float x, float y, float angleDeg) {
-        return drawCentered(text, x, y, 0, angleDeg);
-    }
-
-    private float drawCentered(String text, float x, float y) {
-        float textLength = getLength(text);                  // Get Text Length
-        float centeredX = x - (textLength / 2.0f);
-        float centeredY = y - (getScaledCharHeight() / 2.0f);
-        return drawCentered(text, centeredX, centeredY, 0);
-
-    }
-
-    private float drawCenteredOnXAxis(String text, float x, float y) {
-        float textLength = getLength(text);
-        float centeredX = x - (textLength / 2.0f);
-        draw(text, centeredX, y);
-        return textLength;
-    }
-
-    private void drawCenteredOnYAxis(String text, float x, float y) {
-        float centeredY = y - (getScaledCharHeight() / 2.0f);
-        draw(text, x, centeredY);
+        draw(text, x, y, 0.0f, 0.0f, 0.0f, 0.0f);
     }
 
     private static class FontMetrics {
 
-        // Font Height (Actual; Pixels)
-        private final float height;
-        // Font Ascent (Above Baseline; Pixels)
-        private final float ascent;
-        // Font Descent (Below Baseline; Pixels)
-        private final float descent;
+        private final float actualHeightInPixels;
+        private final float ascentInPixels;
+        private final float descentInPixels;
 
-        public FontMetrics(float height, float ascent, float descent) {
-            this.height = height;
-            this.ascent = ascent;
-            this.descent = descent;
+        public FontMetrics(float actualHeightInPixels, float ascentInPixels, float descentInPixels) {
+            this.actualHeightInPixels = actualHeightInPixels;
+            this.ascentInPixels = ascentInPixels;
+            this.descentInPixels = descentInPixels;
         }
 
         public static FontMetrics loadFromPaint(Paint paint) {

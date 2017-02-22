@@ -38,8 +38,7 @@ public class Texample2Renderer implements GLSurfaceView.Renderer {
         font = createGLText()
                 .assets(activityContext.getAssets())
                 .font("Roboto-Regular.ttf")
-                .size(30)
-                .padding(2,2)
+                .size(60)
                 .build();
 
         // enable texture + alpha blending
@@ -48,27 +47,26 @@ public class Texample2Renderer implements GLSurfaceView.Renderer {
     }
 
     public void onDrawFrame(GL10 unused) {
-        // Redraw background color
-        int clearMask = GL_COLOR_BUFFER_BIT;
-
-        glClear(clearMask);
+        glClear(GL_COLOR_BUFFER_BIT);
 
         Matrix.multiplyMM(mVPMatrix, 0, mProjMatrix, 0, mVMatrix, 0);
 
-        // TEST: render the entire font texture
-        font.drawTexture(width, height, mVPMatrix);            // Draw the Entire Texture
+        font.drawTexture(width, height, mVPMatrix);
 
-        // TEST: render some strings with the font
-        font.begin(1.0f, 1.0f, 1.0f, 1.0f, mVPMatrix);         // Begin Text Rendering (Set Color WHITE)
-        font.drawCentered("Test String 3D!", 0f, 0f, 0f, 0, -30, 0);
-//		font.drawCentered( "Test String :)", 0, 0, 0 );
-        font.draw("Diagonal 1", 40, 40, 40);
-        font.draw("Column 1", 100, 100, 90);
+        font.begin(1.0f, 1.0f, 1.0f, 1.0f, mVPMatrix);
+        {
+            font.startDrawing("Test String 3D!").at(0f, 0f, 0f).centerXY().rotateY((float) -30).draw();
+            font.startDrawing("Diagonal 1").at(40.0f, 40.0f).rotateZ(40.0f).draw();
+            font.startDrawing("Column 1").at(100.0f, 100.0f).rotateZ(90.0f).draw();
+        }
         font.end();
 
-        font.begin(0.0f, 0.0f, 1.0f, 1.0f, mVPMatrix);         // Begin Text Rendering (Set Color BLUE)
-        font.draw("More Lines...", 50, 200);
-        font.draw("The End.", 50, 200 + font.getScaledCharHeight(), 180);
+        font.begin(0.0f, 0.0f, 1.0f, 1.0f, mVPMatrix);
+        {
+            font.draw("Lines...", 150, 0);
+            font.draw("More Lines...", 150, -font.getScaledCharHeight());
+            font.startDrawing("The End.").at(50.0f, 200.0f).rotateZ(180.0f).draw();
+        }
         font.end();
     }
 
