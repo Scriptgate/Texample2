@@ -87,18 +87,21 @@ public class Font {
         cellWidth = (int) characters.charWidthMax + (2 * fontPadX);
         cellHeight = (int) metrics.actualHeightInPixels + (2 * fontPadY);
 
+        fontTexture = new FontTexture(cellWidth, cellHeight);
+
         float xOffset = fontPadX;
         float yOffset = (cellHeight - 1) - metrics.descentInPixels - fontPadY;
 
-        fontTexture = new FontTexture(paint, cellWidth, cellHeight, xOffset, yOffset);
+        fontTexture.buildFontMap(paint, cellWidth, cellHeight, xOffset, yOffset);
     }
 
     private Paint setUpPaint(Typeface typeface, int size) {
-        Paint paint = new Paint();                      // Create Android Paint Instance
-        paint.setAntiAlias(true);                     // Enable Anti Alias
-        paint.setTextSize(size);                      // Set Text Size
-        paint.setColor(0xffffffff);                   // Set ARGB (White, Opaque)
-        paint.setTypeface(typeface);                        // Set Typeface
+        int opaqueWhite = 0xffffffff;
+        Paint paint = new Paint();
+        paint.setAntiAlias(true);
+        paint.setTextSize(size);
+        paint.setColor(opaqueWhite);
+        paint.setTypeface(typeface);
         return paint;
     }
 

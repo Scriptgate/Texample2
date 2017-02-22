@@ -30,7 +30,7 @@ class FontTexture {
     // Region of Each Character (Texture Coordinates)
     private TextureRegion[] textureCoordinates;
 
-    public FontTexture(Paint paint, int cellWidth, int cellHeight, float xOffset, float yOffset) {
+    public FontTexture(int cellWidth, int cellHeight) {
         //get texture size based on max font size (width or height)
         this.size = calculateTextureSize(cellWidth, cellHeight);
         // calculate rows/columns
@@ -41,10 +41,12 @@ class FontTexture {
         // create full texture region
         region = new TextureRegion(size, size, 0, 0, size, size);
 
-        textureId = buildFontMap(paint, size, cellWidth, cellHeight, xOffset, yOffset);
-
         // setup the array of character texture regions
         textureCoordinates = initializeTextureCoordinates(cellWidth, cellHeight);
+    }
+
+    public void buildFontMap(Paint paint, int cellWidth, int cellHeight, float xOffset, float yOffset) {
+        textureId = buildFontMap(paint, size, cellWidth, cellHeight, xOffset, yOffset);
     }
 
     private int calculateTextureSize(int cellWidth, int cellHeight) {
