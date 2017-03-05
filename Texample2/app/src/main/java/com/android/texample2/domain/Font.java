@@ -52,7 +52,7 @@ public class Font {
 
     Font(FontProgram program) {
         this.program = program;
-        batch = new SpriteBatch(CHAR_BATCH_SIZE, program.getMvpMatricesHandle());  // Create Sprite Batch (with Defined Size)
+        batch = new SpriteBatch(CHAR_BATCH_SIZE, program);  // Create Sprite Batch (with Defined Size)
     }
 
     /**

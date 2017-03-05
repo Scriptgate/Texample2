@@ -9,10 +9,12 @@ import android.opengl.Matrix;
 
 import com.android.texample2.domain.Font;
 import com.android.texample2.programs.BatchTextProgram;
+import com.android.texample2.programs.FontProgramAdapter;
 import com.android.texample2.programs.Program;
 
 import static android.opengl.GLES20.*;
 import static com.android.texample2.domain.FontBuilder.createFont;
+import static com.android.texample2.programs.FontProgramAdapter.createFontProgram;
 
 public class Texample2Renderer implements GLSurfaceView.Renderer {
 
@@ -35,10 +37,9 @@ public class Texample2Renderer implements GLSurfaceView.Renderer {
         // Set the background frame color
         glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 
-        Program program = new BatchTextProgram();
-        program.init();
+        Program program = BatchTextProgram.createBatchTextProgram();
         font = createFont()
-                .program(program.createFontProgram())
+                .program(createFontProgram(program))
                 .assets(activityContext.getAssets())
                 .font("Roboto-Regular.ttf")
                 .size(60)

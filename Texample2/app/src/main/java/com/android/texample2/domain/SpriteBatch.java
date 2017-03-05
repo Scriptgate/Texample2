@@ -2,6 +2,8 @@ package com.android.texample2.domain;
 
 import android.opengl.Matrix;
 
+import com.android.texample2.programs.Program;
+
 import java.util.List;
 
 import static android.opengl.GLES20.*;
@@ -31,19 +33,19 @@ class SpriteBatch {
      * @param maxSprites the maximum allowed sprites per batch
      * @param mvpMatricesHandle
      */
-    public SpriteBatch(int maxSprites, int mvpMatricesHandle) {
+    public SpriteBatch(int maxSprites, FontProgram program) {
         uMVPMatrices  = new float[maxSprites * 16];
         this.vertexBuffer = new float[maxSprites * VERTICES_PER_SPRITE * VERTEX_SIZE];  // Create Vertex Buffer
         this.bufferIndex = 0;                           // Reset Buffer Index
         this.maxSprites = maxSprites;                   // Save Maximum Sprites
         this.numSprites = 0;                            // Clear Sprite Counter
 
-        initializeVertices(maxSprites);
-        mMVPMatricesHandle = mvpMatricesHandle;
+        initializeVertices(maxSprites, program);
+        mMVPMatricesHandle = program.getMvpMatricesHandle();
     }
 
-    private void initializeVertices(int maxSprites) {
-        this.vertices = new Vertices(maxSprites * VERTICES_PER_SPRITE, maxSprites * INDICES_PER_SPRITE);  // Create Rendering Vertices
+    private void initializeVertices(int maxSprites, FontProgram program) {
+        this.vertices = new Vertices(maxSprites * VERTICES_PER_SPRITE, maxSprites * INDICES_PER_SPRITE, program);  // Create Rendering Vertices
         short[] indices = new short[maxSprites * INDICES_PER_SPRITE];  // Create Temp Index Buffer
         int len = indices.length;                       // Get Index Buffer Length
         short j = 0;

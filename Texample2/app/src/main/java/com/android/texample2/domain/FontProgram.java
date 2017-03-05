@@ -1,18 +1,18 @@
 package com.android.texample2.domain;
 
 
+import com.android.texample2.AttributeVariable;
+import com.android.texample2.UniformVariable;
+
+import static android.opengl.GLES20.*;
+import static com.android.texample2.UniformVariable.*;
+
 public class FontProgram {
 
     private int programHandle;
-    private int colorHandle;
-    private int textureUniformHandle;
-    private int mvpMatricesHandle;
 
-    public FontProgram(int programHandle, int colorHandle, int textureUniformHandle, int mvpMatricesHandle) {
+    public FontProgram(int programHandle) {
         this.programHandle = programHandle;
-        this.colorHandle = colorHandle;
-        this.textureUniformHandle = textureUniformHandle;
-        this.mvpMatricesHandle = mvpMatricesHandle;
     }
 
     public int getProgramHandle() {
@@ -20,14 +20,22 @@ public class FontProgram {
     }
 
     public int getColorHandle() {
-        return colorHandle;
+        return getHandle(COLOR);
     }
 
     public int getTextureUniformHandle() {
-        return textureUniformHandle;
+        return getHandle(TEXTURE);
     }
 
     public int getMvpMatricesHandle() {
-        return mvpMatricesHandle;
+        return getHandle(MVP_MATRIX);
+    }
+
+    public int getHandle(UniformVariable uniformVariable) {
+        return glGetUniformLocation(programHandle, uniformVariable.getName());
+    }
+
+    public int getHandle(AttributeVariable attributeVariable) {
+        return glGetAttribLocation(programHandle, attributeVariable.getName());
     }
 }

@@ -1,14 +1,14 @@
 package com.android.texample2.domain;
 
+import com.android.texample2.AttributeVariable;
+
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
 import static android.opengl.GLES20.*;
-import static com.android.texample2.AttributeVariable.*;
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.ByteOrder.nativeOrder;
 
-//TODO: remove dependency on AttributeVariable
 class Vertices {
 
     //--Constants--//
@@ -39,10 +39,11 @@ class Vertices {
 
     /**
      * create the vertices/indices as specified (for 2d/3d)
+     *
      * @param maxVertices maximum vertices allowed in buffer
-     * @param maxIndices maximum indices allowed in buffer
+     * @param maxIndices  maximum indices allowed in buffer
      */
-    public Vertices(int maxVertices, int maxIndices) {
+    public Vertices(int maxVertices, int maxIndices, FontProgram program) {
         this.positionCnt = POSITION_CNT_2D;  // Set Position Component Count
         this.vertexStride = this.positionCnt + TEXCOORD_CNT + MVP_MATRIX_INDEX_CNT;  // Calculate Vertex Stride
         this.vertexSize = this.vertexStride * 4;        // Calculate Vertex Byte Size
@@ -61,17 +62,18 @@ class Vertices {
         this.tmpBuffer = new int[maxVertices * vertexSize / 4];  // Create Temp Buffer
 
         // initialize the shader attribute handles
-        mTextureCoordinateHandle = TEXTURE_COORDINATE.getHandle();
-        mMVPIndexHandle = MVP_MATRIX.getHandle();
-        mPositionHandle = POSITION.getHandle();
+        mTextureCoordinateHandle = program.getHandle(AttributeVariable.TEXTURE_COORDINATE);
+        mMVPIndexHandle = program.getHandle(AttributeVariable.MVP_MATRIX);
+        mPositionHandle = program.getHandle(AttributeVariable.POSITION);
     }
 
     /**
      * set the specified vertices in the vertex buffer <br/>
      * NOTE: optimized to use integer buffer!
+     *
      * @param vertices array of vertices (floats) to set
-     * @param offset offset to first vertex in array
-     * @param length number of floats in the vertex array (total) <br/>for easy setting use: vtx_cnt * (this.vertexSize / 4)
+     * @param offset   offset to first vertex in array
+     * @param length   number of floats in the vertex array (total) <br/>for easy setting use: vtx_cnt * (this.vertexSize / 4)
      */
     public void setVertices(float[] vertices, int offset, int length) {
         this.vertices.clear();                          // Remove Existing Vertices
@@ -86,9 +88,10 @@ class Vertices {
 
     /**
      * set the specified indices in the index buffer
+     *
      * @param indices array of indices (shorts) to set
-     * @param offset offset to first index in array
-     * @param length number of indices in array (from offset)
+     * @param offset  offset to first index in array
+     * @param length  number of indices in array (from offset)
      */
     public void setIndices(short[] indices, int offset, int length) {
         this.indices.clear();

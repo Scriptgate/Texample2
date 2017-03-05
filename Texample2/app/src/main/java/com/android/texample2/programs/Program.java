@@ -1,61 +1,27 @@
 package com.android.texample2.programs;
 
-import android.opengl.GLES20;
 import android.util.Log;
 
 import com.android.texample2.AttributeVariable;
-import com.android.texample2.domain.FontProgram;
 
 import static android.opengl.GLES20.*;
 
 
-public abstract class Program {
+public class Program {
 
     private static final String TAG = "Program";
 
     private int programHandle;
-    private int vertexShaderHandle;
-    private int fragmentShaderHandle;
-    private boolean initialized;
 
-    public Program() {
-        initialized = false;
-    }
-
-    public void init() {
-        init(null, null, null);
-    }
-
-    public void init(String vertexShaderCode, String fragmentShaderCode, AttributeVariable[] programVariables) {
-        vertexShaderHandle = loadShader(GLES20.GL_VERTEX_SHADER, vertexShaderCode);
-        fragmentShaderHandle = loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentShaderCode);
+    public Program(String vertexShaderCode, String fragmentShaderCode, AttributeVariable[] programVariables) {
+        int vertexShaderHandle = loadShader(GL_VERTEX_SHADER, vertexShaderCode);
+        int fragmentShaderHandle = loadShader(GL_FRAGMENT_SHADER, fragmentShaderCode);
 
         programHandle = createProgram(vertexShaderHandle, fragmentShaderHandle, programVariables);
-
-        initialized = true;
     }
 
     public int getHandle() {
         return programHandle;
-    }
-
-    public FontProgram createFontProgram() {
-        int colorHandle = glGetUniformLocation(programHandle, "u_Color");
-        int textureUniformHandle = glGetUniformLocation(programHandle, "u_Texture");
-        int mvpMatricesHandle = glGetUniformLocation(programHandle, "u_MVPMatrix");
-
-        return new FontProgram(programHandle, colorHandle, textureUniformHandle, mvpMatricesHandle);
-    }
-
-    public void delete() {
-        GLES20.glDeleteShader(vertexShaderHandle);
-        GLES20.glDeleteShader(fragmentShaderHandle);
-        GLES20.glDeleteProgram(programHandle);
-        initialized = false;
-    }
-
-    public boolean initialized() {
-        return initialized;
     }
 
     private static int createProgram(int vertexShaderHandle, int fragmentShaderHandle, AttributeVariable[] variables) {
@@ -65,8 +31,8 @@ public abstract class Program {
             glAttachShader(mProgram, vertexShaderHandle);
             glAttachShader(mProgram, fragmentShaderHandle);
 
-            for (AttributeVariable var : variables) {
-                glBindAttribLocation(mProgram, var.getHandle(), var.getName());
+            for (int i = 0; i < variables.length; i++) {
+                glBindAttribLocation(mProgram, i, variables[i].getName());
             }
 
             glLinkProgram(mProgram);

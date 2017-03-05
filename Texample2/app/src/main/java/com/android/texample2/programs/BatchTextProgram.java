@@ -6,15 +6,14 @@ import static com.android.texample2.AttributeVariable.*;
 import static com.android.texample2.RawResourceReader.readShaderFileFromResource;
 
 
-public class BatchTextProgram extends Program {
+public class BatchTextProgram {
 
-    @Override
-    public void init() {
-        super.init(
-                readShaderFileFromResource("batch_vertex_shader"),
-                readShaderFileFromResource("batch_fragment_shader"),
-                new AttributeVariable[]{POSITION, TEXTURE_COORDINATE, MVP_MATRIX}
-        );
+    public static Program createBatchTextProgram() {
+        String vertexShaderCode = readShaderFileFromResource("batch_vertex_shader");
+        String fragmentShaderCode = readShaderFileFromResource("batch_fragment_shader");
+        AttributeVariable[] programVariables = {POSITION, TEXTURE_COORDINATE, MVP_MATRIX};
+
+        return new Program(vertexShaderCode, fragmentShaderCode, programVariables);
     }
 
 }
